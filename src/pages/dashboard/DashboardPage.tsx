@@ -19,7 +19,7 @@ const DashboardPage = () => {
       try {
         const { data, error } = await supabase
           .from('events')
-          .select('*, guests(count), invitations(count), rsvps(count), gift_items(count)')
+          .select('*, guests(count), invitations(count), gift_items(count)')
           .eq('user_id', user.id)
           .order('date_start', { ascending: true });
 
