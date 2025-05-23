@@ -27,6 +27,7 @@ import PhotoGalleryPage from './pages/dashboard/PhotoGalleryPage';
 import BudgetPage from './pages/dashboard/BudgetPage';
 import VendorsPage from './pages/dashboard/VendorsPage';
 import CustomQuestionsPage from './pages/dashboard/CustomQuestionsPage';
+import PaymentMethodsPage from './pages/dashboard/PaymentMethodsPage';
 import PublicEventPage from './pages/public/PublicEventPage';
 import RsvpPage from './pages/public/RsvpPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -55,6 +56,7 @@ function App() {
               <Route index element={<DashboardPage />} />
               <Route path="admin" element={<AdminDashboardPage />} />
               <Route path="create-event" element={<CreateEventPage />} />
+              <Route path="payment-methods" element={<PaymentMethodsPage />} />
               <Route path="events/:eventId" element={<EventDetailsPage />} />
               <Route path="events/:eventId/guests" element={<GuestListPage />} />
               <Route path="events/:eventId/analytics" element={<GuestAnalyticsPage />} />
