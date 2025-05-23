@@ -24,5 +24,3 @@ export async function importGuests(eventId: string, csvContent: string) {
     throw error;
   }
 }
-
-export { importGuests }
