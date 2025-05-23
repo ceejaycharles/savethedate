@@ -7,6 +7,8 @@ import Button from '../../components/ui/Button';
 import { Card, CardContent } from '../../components/ui/Card';
 import { AlbumGrid } from '../../components/photos/AlbumGrid';
 import { AlbumModal } from '../../components/photos/AlbumModal';
+import { PhotoUploader } from '../../components/photos/PhotoUploader';
+import { PhotoFilter } from '../../components/photos/PhotoFilter';
 import toast from 'react-hot-toast';
 
 type Photo = Database['public']['Tables']['photos']['Row'];
@@ -22,20 +24,52 @@ const PhotoGalleryPage = () => {
   const [currentAlbum, setCurrentAlbum] = useState<string | null>(null);
   const [showAlbumModal, setShowAlbumModal] = useState(false);
   const [editingAlbum, setEditingAlbum] = useState<Album | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
 
   useEffect(() => {
     fetchPhotos();
     fetchAlbums();
+    fetchTags();
   }, [eventId]);
+
+  const fetchTags = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('photo_tags')
+        .select('tag')
+        .distinct()
+        .eq('photo_id', 'in', (
+          supabase
+            .from('photos')
+            .select('id')
+            .eq('event_id', eventId)
+        ));
+
+      if (error) throw error;
+      setAvailableTags(data.map(t => t.tag));
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+    }
+  };
 
   const fetchPhotos = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('photos')
         .select('*, photo_tags(*)')
-        .eq('event_id', eventId)
-        .eq(currentAlbum ? 'album_id' : 'album_id', currentAlbum)
-        .order('created_at', { ascending: false });
+        .eq('event_id', eventId);
+
+      if (selectedTags.length > 0) {
+        query = query.contains('photo_tags.tag', selectedTags);
+      }
+
+      if (searchQuery) {
+        query = query.ilike('caption', `%${searchQuery}%`);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       setPhotos(data || []);
@@ -304,57 +338,85 @@ const PhotoGalleryPage = () => {
         </div>
       </div>
 
-      {currentAlbum === null ? (
-        <AlbumGrid
-          albums={albums}
-          onCreateAlbum={() => setShowAlbumModal(true)}
-          onSelectAlbum={setCurrentAlbum}
-        />
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {photos.map((photo) => (
-            <Card key={photo.id} className="overflow-hidden group relative">
-              <div className="relative aspect-square">
-                <img
-                  src={photo.image_url}
-                  alt={photo.caption || 'Event photo'}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity" />
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="bg-white"
-                    onClick={() => {
-                      const newPrivacy = photo.privacy_setting === 'public' ? 'event' : 'public';
-                      updatePrivacy(photo.id, newPrivacy);
-                    }}
-                  >
-                    {photo.privacy_setting === 'public' ? (
-                      <Globe className="w-4 h-4" />
-                    ) : (
-                      <Lock className="w-4 h-4" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(photo.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-              {photo.caption && (
-                <CardContent className="p-4">
-                  <p className="text-sm text-gray-600">{photo.caption}</p>
-                </CardContent>
-              )}
-            </Card>
-          ))}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="lg:col-span-1">
+          <PhotoFilter
+            tags={availableTags}
+            selectedTags={selectedTags}
+            onTagSelect={(tag) => {
+              setSelectedTags(prev =>
+                prev.includes(tag)
+                  ? prev.filter(t => t !== tag)
+                  : [...prev, tag]
+              );
+            }}
+            onSearch={setSearchQuery}
+          />
         </div>
-      )}
+
+        <div className="lg:col-span-3">
+          <PhotoUploader
+            eventId={eventId!}
+            albumId={currentAlbum}
+            onUploadComplete={() => {
+              fetchPhotos();
+              fetchTags();
+            }}
+          />
+
+          {currentAlbum === null ? (
+            <AlbumGrid
+              albums={albums}
+              onCreateAlbum={() => setShowAlbumModal(true)}
+              onSelectAlbum={setCurrentAlbum}
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {photos.map((photo) => (
+                <Card key={photo.id} className="overflow-hidden group relative">
+                  <div className="relative aspect-square">
+                    <img
+                      src={photo.image_url}
+                      alt={photo.caption || 'Event photo'}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity" />
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="bg-white"
+                        onClick={() => {
+                          const newPrivacy = photo.privacy_setting === 'public' ? 'event' : 'public';
+                          updatePrivacy(photo.id, newPrivacy);
+                        }}
+                      >
+                        {photo.privacy_setting === 'public' ? (
+                          <Globe className="w-4 h-4" />
+                        ) : (
+                          <Lock className="w-4 h-4" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDelete(photo.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  {photo.caption && (
+                    <CardContent className="p-4">
+                      <p className="text-sm text-gray-600">{photo.caption}</p>
+                    </CardContent>
+                  )}
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
       {showAlbumModal && (
         <AlbumModal
