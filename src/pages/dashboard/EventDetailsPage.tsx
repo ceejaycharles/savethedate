@@ -6,7 +6,7 @@ import { Card, CardContent } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import ShareButtons from '../../components/social/ShareButtons';
-import { Calendar, MapPin, Clock, Users, Gift, Image, Trash2, Edit2, Save, X } from 'lucide-react';
+import { Calendar, MapPin, Clock, Users, Gift, Image, Trash2, Edit2, Save, X, UtensilsCrossed } from 'lucide-react';
 import { formatDate, formatTime } from '../../lib/utils';
 import toast from 'react-hot-toast';
 
@@ -196,7 +196,11 @@ const EventDetailsPage = () => {
       )}
 
       <div className="mb-8">
-        <ShareButtons eventId={event.id} />
+        <ShareButtons 
+          url={`${window.location.origin}/events/${event.id}`}
+          title={event.name}
+          description={event.description}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -303,13 +307,21 @@ const EventDetailsPage = () => {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Button
           onClick={() => navigate(`/dashboard/events/${eventId}/guests`)}
           className="w-full"
         >
           <Users className="w-4 h-4 mr-2" />
           Manage Guests
+        </Button>
+        
+        <Button
+          onClick={() => navigate(`/dashboard/events/${eventId}/meals`)}
+          className="w-full"
+        >
+          <UtensilsCrossed className="w-4 h-4 mr-2" />
+          Meal Options
         </Button>
         
         <Button

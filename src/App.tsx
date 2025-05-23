@@ -22,6 +22,7 @@ import EventDetailsPage from './pages/dashboard/EventDetailsPage';
 import GuestListPage from './pages/dashboard/GuestListPage';
 import GiftRegistryPage from './pages/dashboard/GiftRegistryPage';
 import PhotoGalleryPage from './pages/dashboard/PhotoGalleryPage';
+import MealOptionsPage from './pages/dashboard/MealOptionsPage';
 import PublicEventPage from './pages/public/PublicEventPage';
 import RsvpPage from './pages/public/RsvpPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -52,6 +53,7 @@ function App() {
               <Route path="create-event" element={<CreateEventPage />} />
               <Route path="events/:eventId" element={<EventDetailsPage />} />
               <Route path="events/:eventId/guests" element={<GuestListPage />} />
+              <Route path="events/:eventId/meals" element={<MealOptionsPage />} />
               <Route path="events/:eventId/gifts" element={<GiftRegistryPage />} />
               <Route path="events/:eventId/photos" element={<PhotoGalleryPage />} />
             </Route>
