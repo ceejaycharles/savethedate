@@ -32,3 +32,14 @@ export async function sendInvitation(eventId: string, guestIds: string[]) {
   if (error) throw error;
   return data;
 }
+
+export async function sendRsvpReminder(eventId: string) {
+  const { data, error } = await supabase.functions.invoke('send-reminder', {
+    body: JSON.stringify({
+      eventId,
+    }),
+  });
+
+  if (error) throw error;
+  return data;
+}
