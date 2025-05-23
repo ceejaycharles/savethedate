@@ -5,6 +5,7 @@ import { Card } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import BulkImportModal from '../../components/guests/BulkImportModal';
+import { GuestForm } from '../../components/guests/GuestForm';
 import { Plus, Trash2, Mail, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -21,7 +22,14 @@ export default function GuestListPage() {
   const [guests, setGuests] = useState<Guest[]>([]);
   const [loading, setLoading] = useState(true);
   const [showImportModal, setShowImportModal] = useState(false);
-  const [newGuest, setNewGuest] = useState({ name: '', email: '', phone: '' });
+  const [newGuest, setNewGuest] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    plus_one_allowed: false,
+    plus_one_name: '',
+    plus_one_email: '',
+  });
 
   useEffect(() => {
     fetchGuests();
@@ -45,32 +53,40 @@ export default function GuestListPage() {
     }
   }
 
-  async function addGuest(e: React.FormEvent) {
+  const handleAddGuest = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const { data, error } = await supabase
         .from('guests')
-        .insert([
-          {
-            event_id: eventId,
-            name: newGuest.name,
-            email: newGuest.email,
-            phone: newGuest.phone || null,
-          },
-        ])
+        .insert([{
+          event_id: eventId,
+          name: newGuest.name,
+          email: newGuest.email,
+          phone: newGuest.phone || null,
+          plus_one_allowed: newGuest.plus_one_allowed,
+          plus_one_name: newGuest.plus_one_allowed ? newGuest.plus_one_name : null,
+          plus_one_email: newGuest.plus_one_allowed ? newGuest.plus_one_email : null,
+        }])
         .select()
         .single();
 
       if (error) throw error;
 
       setGuests([...guests, data]);
-      setNewGuest({ name: '', email: '', phone: '' });
+      setNewGuest({
+        name: '',
+        email: '',
+        phone: '',
+        plus_one_allowed: false,
+        plus_one_name: '',
+        plus_one_email: '',
+      });
       toast.success('Guest added successfully');
     } catch (error) {
+      console.error('Error adding guest:', error);
       toast.error('Failed to add guest');
-      console.error('Error:', error);
     }
-  }
+  };
 
   async function deleteGuest(guestId: string) {
     try {
@@ -127,7 +143,7 @@ export default function GuestListPage() {
   }
 
   return (
-    <div className="p-4 max-w-4xl mx-auto">
+    <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Guest List</h1>
         <Button onClick={() => setShowImportModal(true)} leftIcon={<Upload className="w-4 h-4" />}>
@@ -135,36 +151,11 @@ export default function GuestListPage() {
         </Button>
       </div>
 
-      <Card className="p-4 mb-6">
-        <form onSubmit={addGuest} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input
-              type="text"
-              placeholder="Guest Name"
-              value={newGuest.name}
-              onChange={e => setNewGuest({ ...newGuest, name: e.target.value })}
-              required
-            />
-            <Input
-              type="email"
-              placeholder="Email Address"
-              value={newGuest.email}
-              onChange={e => setNewGuest({ ...newGuest, email: e.target.value })}
-              required
-            />
-            <Input
-              type="tel"
-              placeholder="Phone Number (Optional)"
-              value={newGuest.phone}
-              onChange={e => setNewGuest({ ...newGuest, phone: e.target.value })}
-            />
-          </div>
-          <Button type="submit" className="w-full md:w-auto">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Guest
-          </Button>
-        </form>
-      </Card>
+      <GuestForm
+        guest={newGuest}
+        onChange={setNewGuest}
+        onSubmit={handleAddGuest}
+      />
 
       <div className="space-y-4">
         {guests.length === 0 ? (
