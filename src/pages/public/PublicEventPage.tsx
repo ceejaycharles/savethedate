@@ -110,3 +110,5 @@ const PublicEventPage = () => {
     </div>
   );
 };
+
+export default PublicEventPage
