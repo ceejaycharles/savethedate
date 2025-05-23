@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Camera, Upload, Trash2, Lock, Globe, Eye, Settings } from 'lucide-react';
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { Database } from '../../lib/database.types';
+import { supabase } from '../../lib/supabase';
 import Button from '../../components/ui/Button';
 import { Card, CardContent } from '../../components/ui/Card';
 import toast from 'react-hot-toast';
@@ -11,7 +11,6 @@ type Photo = Database['public']['Tables']['photos']['Row'];
 
 const PhotoGalleryPage = () => {
   const { eventId } = useParams();
-  const supabase = useSupabaseClient<Database>();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -236,5 +235,3 @@ const PhotoGalleryPage = () => {
     </div>
   );
 };
-
-export default PhotoGalleryPage;

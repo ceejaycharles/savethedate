@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Calendar, MapPin, Clock } from 'lucide-react';
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { Database } from '../../lib/database.types';
+import { supabase } from '../../lib/supabase';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 
@@ -10,7 +10,6 @@ type Event = Database['public']['Tables']['events']['Row'];
 
 const PublicEventPage = () => {
   const { eventId } = useParams();
-  const supabase = useSupabaseClient<Database>();
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -111,5 +110,3 @@ const PublicEventPage = () => {
     </div>
   );
 };
-
-export default PublicEventPage;
