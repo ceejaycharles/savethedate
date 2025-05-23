@@ -20,6 +20,7 @@ import AdminDashboardPage from './pages/dashboard/AdminDashboardPage';
 import CreateEventPage from './pages/dashboard/CreateEventPage';
 import EventDetailsPage from './pages/dashboard/EventDetailsPage';
 import GuestListPage from './pages/dashboard/GuestListPage';
+import GuestAnalyticsPage from './pages/dashboard/GuestAnalyticsPage';
 import MealOptionsPage from './pages/dashboard/MealOptionsPage';
 import GiftRegistryPage from './pages/dashboard/GiftRegistryPage';
 import PhotoGalleryPage from './pages/dashboard/PhotoGalleryPage';
@@ -56,6 +57,7 @@ function App() {
               <Route path="create-event" element={<CreateEventPage />} />
               <Route path="events/:eventId" element={<EventDetailsPage />} />
               <Route path="events/:eventId/guests" element={<GuestListPage />} />
+              <Route path="events/:eventId/analytics" element={<GuestAnalyticsPage />} />
               <Route path="events/:eventId/meals" element={<MealOptionsPage />} />
               <Route path="events/:eventId/gifts" element={<GiftRegistryPage />} />
               <Route path="events/:eventId/photos" element={<PhotoGalleryPage />} />
