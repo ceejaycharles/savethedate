@@ -5,6 +5,7 @@ import { Database } from '../../lib/database.types';
 import { Card, CardContent } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import ShareButtons from '../components/social/ShareButtons';
 import { Calendar, MapPin, Clock, Users, Gift, Image, Trash2, Edit2, Save, X } from 'lucide-react';
 import { formatDate, formatTime } from '../../lib/utils';
 import toast from 'react-hot-toast';
@@ -194,6 +195,10 @@ const EventDetailsPage = () => {
           />
         </Card>
       )}
+
+      <div className="mb-8">
+        <ShareButtons eventId={event.id} />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <Card>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { 
@@ -12,15 +12,38 @@ import {
   Settings, 
   User, 
   Users, 
-  X 
+  X,
+  Shield 
 } from 'lucide-react';
 import Button from '../components/ui/Button';
+import { supabase } from '../lib/supabase';
 
 const DashboardLayout = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      checkAdminStatus();
+    }
+  }, [user]);
+
+  const checkAdminStatus = async () => {
+    try {
+      const { data } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user?.id)
+        .single();
+      
+      setIsAdmin(data?.role === 'admin');
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -96,6 +119,20 @@ const DashboardLayout = () => {
                 <PlusCircle className="mr-3 h-5 w-5" />
                 Create Event
               </Link>
+
+              {isAdmin && (
+                <Link
+                  to="/dashboard/admin"
+                  className={`flex items-center px-4 py-3 text-sm font-medium rounded-md ${
+                    isActive('/dashboard/admin')
+                      ? 'bg-primary-50 text-primary-700'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <Shield className="mr-3 h-5 w-5" />
+                  Admin Panel
+                </Link>
+              )}
               
               <div className="pt-4 pb-2">
                 <h3 className="px-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
