@@ -1,4 +1,3 @@
-```typescript
 import React from 'react';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
@@ -11,7 +10,7 @@ interface PhotoFilterProps {
   onSearch: (query: string) => void;
 }
 
-export function PhotoFilter({ tags, selectedTags, onTagSelect, onSearch }: PhotoFilterProps) {
+export default function PhotoFilter({ tags, selectedTags, onTagSelect, onSearch }: PhotoFilterProps) {
   return (
     <div className="space-y-4">
       <div>
@@ -45,4 +44,3 @@ export function PhotoFilter({ tags, selectedTags, onTagSelect, onSearch }: Photo
     </div>
   );
 }
-```
