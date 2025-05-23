@@ -235,3 +235,5 @@ const PhotoGalleryPage = () => {
     </div>
   );
 };
+
+export default PhotoGalleryPage
