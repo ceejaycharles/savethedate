@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { Card, CardContent } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import { MealSelection } from '../../components/rsvp/MealSelection';
 import { Calendar, MapPin, Clock, Users, X, Check } from 'lucide-react';
 import { formatDate, formatTime } from '../../lib/utils';
 import toast from 'react-hot-toast';
@@ -184,6 +185,12 @@ const RsvpPage = () => {
                       leftIcon={<Users className="h-5 w-5 text-gray-400" />}
                     />
                   </div>
+
+                  <MealSelection
+                    eventId={invitation.event.id}
+                    guestId={invitation.guest.id}
+                    guestCount={rsvpData.guestCount}
+                  />
 
                   <div>
                     <Input
