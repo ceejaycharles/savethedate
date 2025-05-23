@@ -16,6 +16,7 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
+import AdminDashboardPage from './pages/dashboard/AdminDashboardPage';
 import CreateEventPage from './pages/dashboard/CreateEventPage';
 import EventDetailsPage from './pages/dashboard/EventDetailsPage';
 import GuestListPage from './pages/dashboard/GuestListPage';
@@ -47,6 +48,7 @@ function App() {
             {/* Protected dashboard routes */}
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<DashboardPage />} />
+              <Route path="admin" element={<AdminDashboardPage />} />
               <Route path="create-event" element={<CreateEventPage />} />
               <Route path="events/:eventId" element={<EventDetailsPage />} />
               <Route path="events/:eventId/guests" element={<GuestListPage />} />
