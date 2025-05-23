@@ -4,7 +4,8 @@ import { supabase } from '../../lib/supabase';
 import { Card } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
-import { Plus, Trash2, Mail } from 'lucide-react';
+import BulkImportModal from '../../components/guests/BulkImportModal';
+import { Plus, Trash2, Mail, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface Guest {
@@ -19,6 +20,7 @@ export default function GuestListPage() {
   const { eventId } = useParams();
   const [guests, setGuests] = useState<Guest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [newGuest, setNewGuest] = useState({ name: '', email: '', phone: '' });
 
   useEffect(() => {
@@ -126,7 +128,12 @@ export default function GuestListPage() {
 
   return (
     <div className="p-4 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Guest List</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Guest List</h1>
+        <Button onClick={() => setShowImportModal(true)} leftIcon={<Upload className="w-4 h-4" />}>
+          Import Guests
+        </Button>
+      </div>
 
       <Card className="p-4 mb-6">
         <form onSubmit={addGuest} className="space-y-4">
@@ -195,6 +202,14 @@ export default function GuestListPage() {
           ))
         )}
       </div>
+
+      {showImportModal && (
+        <BulkImportModal
+          eventId={eventId!}
+          onClose={() => setShowImportModal(false)}
+          onSuccess={fetchGuests}
+        />
+      )}
     </div>
   );
 }
