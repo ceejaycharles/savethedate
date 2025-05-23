@@ -1,9 +1,18 @@
 import { supabase } from './supabase';
 
-const PAYSTACK_SECRET_KEY = import.meta.env.VITE_PAYSTACK_SECRET_KEY;
 const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
 
-export async function initializeTransaction(amount: number, email: string, metadata: any) {
+interface PaystackConfig {
+  email: string;
+  amount: number;
+  metadata: {
+    gift_item_id: string;
+    event_id: string;
+  };
+  callback_url?: string;
+}
+
+export async function initializePayment(config: PaystackConfig) {
   try {
     const response = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
@@ -12,32 +21,48 @@ export async function initializeTransaction(amount: number, email: string, metad
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        amount: amount * 100, // Convert to kobo
-        email,
-        metadata,
+        email: config.email,
+        amount: Math.round(config.amount * 100), // Convert to kobo
+        metadata: config.metadata,
+        callback_url: config.callback_url || window.location.origin + '/payment/callback',
       }),
     });
 
     const data = await response.json();
-    return data;
+    
+    if (!data.status) {
+      throw new Error(data.message);
+    }
+
+    // Create transaction record
+    const { error: transactionError } = await supabase
+      .from('transactions')
+      .insert({
+        gift_item_id: config.metadata.gift_item_id,
+        amount: config.amount,
+        paystack_reference: data.data.reference,
+        status: 'pending',
+      });
+
+    if (transactionError) throw transactionError;
+
+    return data.data;
   } catch (error) {
-    console.error('Paystack initialization error:', error);
+    console.error('Payment initialization error:', error);
     throw error;
   }
 }
 
-export async function verifyTransaction(reference: string) {
+export async function verifyPayment(reference: string) {
   try {
-    const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
-      headers: {
-        Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
-      },
+    const { data: functionData, error } = await supabase.functions.invoke('process-payment', {
+      body: JSON.stringify({ reference }),
     });
 
-    const data = await response.json();
-    return data;
+    if (error) throw error;
+    return functionData;
   } catch (error) {
-    console.error('Paystack verification error:', error);
+    console.error('Payment verification error:', error);
     throw error;
   }
 }

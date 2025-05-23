@@ -12,12 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-    );
-
-    const { reference, amount, giftItemId, userId } = await req.json();
+    const { reference } = await req.json();
 
     // Verify payment with Paystack
     const verifyResponse = await fetch(
@@ -35,40 +30,39 @@ serve(async (req) => {
       throw new Error("Payment verification failed");
     }
 
-    // Calculate fee based on user's subscription tier
-    const { data: userData } = await supabaseClient
-      .from("users")
-      .select("subscription_tier_id")
-      .eq("id", userId)
-      .single();
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    );
 
-    const { data: tierData } = await supabaseClient
-      .from("subscription_tiers")
-      .select("transaction_fee_percentage")
-      .eq("id", userData?.subscription_tier_id)
-      .single();
-
-    const feePercentage = tierData?.transaction_fee_percentage || 5;
-    const feeAmount = (amount * feePercentage) / 100;
-
-    // Update transaction record
+    // Update transaction status
     const { error: transactionError } = await supabaseClient
       .from("transactions")
       .update({
         status: "completed",
-        fee_amount: feeAmount,
+        payout_status: "pending",
       })
       .eq("paystack_reference", reference);
 
     if (transactionError) throw transactionError;
 
     // Update gift item purchased quantity
-    const { error: giftError } = await supabaseClient.rpc(
-      "increment_gift_purchased_quantity",
-      { gift_item_id: giftItemId }
-    );
+    const { data: transaction } = await supabaseClient
+      .from("transactions")
+      .select("gift_item_id")
+      .eq("paystack_reference", reference)
+      .single();
 
-    if (giftError) throw giftError;
+    if (transaction) {
+      const { error: giftError } = await supabaseClient
+        .from("gift_items")
+        .update({
+          purchased_quantity: supabaseClient.sql`purchased_quantity + 1`,
+        })
+        .eq("id", transaction.gift_item_id);
+
+      if (giftError) throw giftError;
+    }
 
     return new Response(
       JSON.stringify({ success: true }),
