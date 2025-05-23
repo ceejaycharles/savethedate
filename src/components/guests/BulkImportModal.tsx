@@ -70,3 +70,5 @@ export function BulkImportModal({ isOpen, onClose, onImport }: BulkImportModalPr
     </div>
   );
 }
+
+export default BulkImportModal
