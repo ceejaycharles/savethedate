@@ -11,7 +11,15 @@ export default tseslint.config(
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2020,
-      globals: globals.browser,
+      globals: {
+        ...globals.browser,
+        React: 'readonly',
+      },
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true
+        }
+      }
     },
     plugins: {
       'react-hooks': reactHooks,
@@ -23,6 +31,9 @@ export default tseslint.config(
         'warn',
         { allowConstantExport: true },
       ],
+      // Disable semicolon requirement in JSX attributes
+      'semi': 'off',
+      '@typescript-eslint/semi': ['error', 'always', { 'omitLastInOneLineBlock': true }]
     },
   }
 );
