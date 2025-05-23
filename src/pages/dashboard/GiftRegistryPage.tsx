@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { useSupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../lib/database.types';
+import { supabase } from '../../lib/supabase';
 import { Card, CardContent } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -13,7 +13,6 @@ type GiftItem = Database['public']['Tables']['gift_items']['Row'];
 
 const GiftRegistryPage = () => {
   const { eventId } = useParams();
-  const supabase = useSupabaseClient<Database>();
   const [giftItems, setGiftItems] = useState<GiftItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddingItem, setIsAddingItem] = useState(false);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useSupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../lib/database.types';
+import { supabase } from '../../lib/supabase';
 import { Card, CardContent } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -15,7 +15,6 @@ type Event = Database['public']['Tables']['events']['Row'];
 const EventDetailsPage = () => {
   const { eventId } = useParams();
   const navigate = useNavigate();
-  const supabase = useSupabaseClient<Database>();
   
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
