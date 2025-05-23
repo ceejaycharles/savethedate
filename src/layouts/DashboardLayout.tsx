@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   Calendar, 
@@ -13,7 +13,8 @@ import {
   User, 
   Users, 
   X,
-  Shield 
+  Shield,
+  CreditCard 
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import { supabase } from '../lib/supabase';
@@ -118,6 +119,18 @@ const DashboardLayout = () => {
               >
                 <PlusCircle className="mr-3 h-5 w-5" />
                 Create Event
+              </Link>
+
+              <Link
+                to="/dashboard/payment-methods"
+                className={`flex items-center px-4 py-3 text-sm font-medium rounded-md ${
+                  isActive('/dashboard/payment-methods')
+                    ? 'bg-primary-50 text-primary-700'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <CreditCard className="mr-3 h-5 w-5" />
+                Payment Methods
               </Link>
 
               {isAdmin && (
