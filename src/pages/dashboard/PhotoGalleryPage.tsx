@@ -434,5 +434,3 @@ const PhotoGalleryPage = () => {
 };
 
 export default PhotoGalleryPage;
-
-export default PhotoGalleryPage
