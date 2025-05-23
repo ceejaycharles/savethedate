@@ -1,24 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Camera, Upload, Trash2, Lock, Globe, Eye, Settings } from 'lucide-react';
+import { Camera, Upload, Trash2, Lock, Globe, Eye, Settings, Album } from 'lucide-react';
 import { Database } from '../../lib/database.types';
 import { supabase } from '../../lib/supabase';
 import Button from '../../components/ui/Button';
 import { Card, CardContent } from '../../components/ui/Card';
+import { AlbumGrid } from '../../components/photos/AlbumGrid';
+import { AlbumModal } from '../../components/photos/AlbumModal';
 import toast from 'react-hot-toast';
 
 type Photo = Database['public']['Tables']['photos']['Row'];
+type Album = Database['public']['Tables']['photo_albums']['Row'];
 
 const PhotoGalleryPage = () => {
   const { eventId } = useParams();
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [albums, setAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
+  const [showAlbumModal, setShowAlbumModal] = useState(false);
+  const [selectedAlbum, setSelectedAlbum] = useState<string | null>(null);
 
   useEffect(() => {
+    fetchAlbums();
     fetchPhotos();
   }, [eventId]);
+
+  const fetchAlbums = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('photo_albums')
+        .select('*')
+        .eq('event_id', eventId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setAlbums(data || []);
+    } catch (error) {
+      console.error('Error fetching albums:', error);
+      toast.error('Failed to load albums');
+    }
+  };
 
   const fetchPhotos = async () => {
     try {
@@ -35,6 +58,47 @@ const PhotoGalleryPage = () => {
       toast.error('Failed to load photos');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateAlbum = async (data: { name: string; description: string }) => {
+    try {
+      const { error } = await supabase
+        .from('photo_albums')
+        .insert([
+          {
+            event_id: eventId,
+            name: data.name,
+            description: data.description
+          }
+        ]);
+
+      if (error) throw error;
+
+      setShowAlbumModal(false);
+      fetchAlbums();
+      toast.success('Album created successfully');
+    } catch (error) {
+      console.error('Error creating album:', error);
+      toast.error('Failed to create album');
+    }
+  };
+
+  const handleMoveToAlbum = async (albumId: string) => {
+    try {
+      const { error } = await supabase
+        .from('photos')
+        .update({ album_id: albumId })
+        .in('id', selectedPhotos);
+
+      if (error) throw error;
+
+      setSelectedPhotos([]);
+      fetchPhotos();
+      toast.success('Photos moved to album');
+    } catch (error) {
+      console.error('Error moving photos:', error);
+      toast.error('Failed to move photos');
     }
   };
 
@@ -138,102 +202,135 @@ const PhotoGalleryPage = () => {
           <p className="text-gray-600 mt-1">Share and manage your event photos</p>
         </div>
         <div className="flex items-center space-x-4">
-          {selectedPhotos.length > 0 && (
-            <Button
-              variant="destructive"
-              onClick={() => {
-                selectedPhotos.forEach(id => handleDelete(id));
-                setSelectedPhotos([]);
-              }}
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete Selected
-            </Button>
+          {selectedPhotos.length > 0 ? (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setShowAlbumModal(true)}
+              >
+                <Album className="w-4 h-4 mr-2" />
+                Move to Album
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  selectedPhotos.forEach(id => handleDelete(id));
+                  setSelectedPhotos([]);
+                }}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete Selected
+              </Button>
+            </>
+          ) : (
+            <label className="cursor-pointer">
+              <Button isLoading={uploading}>
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Photos
+              </Button>
+              <input
+                type="file"
+                className="hidden"
+                accept="image/*"
+                multiple
+                onChange={handleFileUpload}
+                disabled={uploading}
+              />
+            </label>
           )}
-          <label className="cursor-pointer">
-            <Button isLoading={uploading}>
-              <Upload className="w-4 h-4 mr-2" />
-              Upload Photos
-            </Button>
-            <input
-              type="file"
-              className="hidden"
-              accept="image/*"
-              multiple
-              onChange={handleFileUpload}
-              disabled={uploading}
-            />
-          </label>
         </div>
       </div>
 
-      {photos.length === 0 ? (
-        <Card className="p-8 text-center">
-          <Camera className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-          <h2 className="text-xl font-semibold mb-2">No Photos Yet</h2>
-          <p className="text-gray-600 mb-4">Start capturing memories by uploading photos of your event.</p>
-          <label className="cursor-pointer">
-            <Button variant="outline">
-              <Upload className="w-4 h-4 mr-2" />
-              Upload Your First Photo
-            </Button>
-            <input
-              type="file"
-              className="hidden"
-              accept="image/*"
-              multiple
-              onChange={handleFileUpload}
-              disabled={uploading}
-            />
-          </label>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {photos.map((photo) => (
-            <Card key={photo.id} className="overflow-hidden group relative">
-              <div className="relative aspect-square">
-                <img
-                  src={photo.image_url}
-                  alt={photo.caption || 'Event photo'}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity" />
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="bg-white"
-                    onClick={() => {
-                      const newPrivacy = photo.privacy_setting === 'public' ? 'event' : 'public';
-                      updatePrivacy(photo.id, newPrivacy);
-                    }}
-                  >
-                    {photo.privacy_setting === 'public' ? (
-                      <Globe className="w-4 h-4" />
-                    ) : (
-                      <Lock className="w-4 h-4" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(photo.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+      {/* Album Grid */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">Albums</h2>
+        <AlbumGrid
+          albums={albums}
+          onCreateAlbum={() => setShowAlbumModal(true)}
+          onSelectAlbum={setSelectedAlbum}
+        />
+      </div>
+
+      {/* Photos Grid */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">
+          {selectedAlbum ? 'Album Photos' : 'All Photos'}
+        </h2>
+        {photos.length === 0 ? (
+          <Card className="p-8 text-center">
+            <Camera className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+            <h2 className="text-xl font-semibold mb-2">No Photos Yet</h2>
+            <p className="text-gray-600 mb-4">Start capturing memories by uploading photos of your event.</p>
+            <label className="cursor-pointer">
+              <Button variant="outline">
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Your First Photo
+              </Button>
+              <input
+                type="file"
+                className="hidden"
+                accept="image/*"
+                multiple
+                onChange={handleFileUpload}
+                disabled={uploading}
+              />
+            </label>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {photos.map((photo) => (
+              <Card key={photo.id} className="overflow-hidden group relative">
+                <div className="relative aspect-square">
+                  <img
+                    src={photo.image_url}
+                    alt={photo.caption || 'Event photo'}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity" />
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-white"
+                      onClick={() => {
+                        const newPrivacy = photo.privacy_setting === 'public' ? 'event' : 'public';
+                        updatePrivacy(photo.id, newPrivacy);
+                      }}
+                    >
+                      {photo.privacy_setting === 'public' ? (
+                        <Globe className="w-4 h-4" />
+                      ) : (
+                        <Lock className="w-4 h-4" />
+                      )}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDelete(photo.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-              {photo.caption && (
-                <CardContent className="p-4">
-                  <p className="text-sm text-gray-600">{photo.caption}</p>
-                </CardContent>
-              )}
-            </Card>
-          ))}
-        </div>
-      )}
+                {photo.caption && (
+                  <CardContent className="p-4">
+                    <p className="text-sm text-gray-600">{photo.caption}</p>
+                  </CardContent>
+                )}
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Album Modal */}
+      <AlbumModal
+        isOpen={showAlbumModal}
+        onClose={() => setShowAlbumModal(false)}
+        onSave={handleCreateAlbum}
+      />
     </div>
   );
 };
 
-export default PhotoGalleryPage
+export default PhotoGalleryPage;
