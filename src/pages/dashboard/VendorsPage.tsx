@@ -1,4 +1,3 @@
-```typescript
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent } from '../../components/ui/Card';
@@ -270,7 +269,7 @@ export default function VendorsPage() {
                         {vendor.contact_email && (
                           <div className="flex items-center text-sm text-gray-600">
                             <Mail className="h-4 w-4 mr-2" />
-                            <a href={`mailto:${vendor.contact_email}`} className="hover:text-primary-600">
+                            <a href={`mailto:${vendor.contact_email};`} className="hover:text-primary-600">
                               {vendor.contact_email}
                             </a>
                           </div>
@@ -316,4 +315,3 @@ export default function VendorsPage() {
     </div>
   );
 }
-```
