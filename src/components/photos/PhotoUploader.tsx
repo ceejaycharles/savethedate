@@ -1,4 +1,3 @@
-```typescript
 import React, { useState } from 'react';
 import { Card, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -174,4 +173,3 @@ export function PhotoUploader({ eventId, albumId, onUploadComplete }: PhotoUploa
     </Card>
   );
 }
-```
