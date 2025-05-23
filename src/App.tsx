@@ -1,3 +1,4 @@
+```typescript
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
@@ -20,13 +21,15 @@ import AdminDashboardPage from './pages/dashboard/AdminDashboardPage';
 import CreateEventPage from './pages/dashboard/CreateEventPage';
 import EventDetailsPage from './pages/dashboard/EventDetailsPage';
 import GuestListPage from './pages/dashboard/GuestListPage';
+import MealOptionsPage from './pages/dashboard/MealOptionsPage';
 import GiftRegistryPage from './pages/dashboard/GiftRegistryPage';
 import PhotoGalleryPage from './pages/dashboard/PhotoGalleryPage';
-import MealOptionsPage from './pages/dashboard/MealOptionsPage';
+import BudgetPage from './pages/dashboard/BudgetPage';
+import VendorsPage from './pages/dashboard/VendorsPage';
+import CustomQuestionsPage from './pages/dashboard/CustomQuestionsPage';
 import PublicEventPage from './pages/public/PublicEventPage';
 import RsvpPage from './pages/public/RsvpPage';
 import NotFoundPage from './pages/NotFoundPage';
-import CustomQuestionsPage from './pages/dashboard/CustomQuestionsPage';
 
 function App() {
   return (
@@ -57,6 +60,8 @@ function App() {
               <Route path="events/:eventId/meals" element={<MealOptionsPage />} />
               <Route path="events/:eventId/gifts" element={<GiftRegistryPage />} />
               <Route path="events/:eventId/photos" element={<PhotoGalleryPage />} />
+              <Route path="events/:eventId/budget" element={<BudgetPage />} />
+              <Route path="events/:eventId/vendors" element={<VendorsPage />} />
               <Route path="events/:eventId/questions" element={<CustomQuestionsPage />} />
             </Route>
             
@@ -70,3 +75,4 @@ function App() {
 }
 
 export default App;
+```
