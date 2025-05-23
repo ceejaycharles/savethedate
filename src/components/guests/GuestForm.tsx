@@ -1,4 +1,3 @@
-```typescript
 import React from 'react';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
@@ -20,7 +19,7 @@ interface GuestFormProps {
   onCancel?: () => void;
 }
 
-export function GuestForm({ guest, onChange, onSubmit, isEditing, onCancel }: GuestFormProps) {
+const GuestForm = ({ guest, onChange, onSubmit, isEditing, onCancel }: GuestFormProps) => {
   return (
     <Card>
       <CardContent className="p-6">
@@ -95,5 +94,6 @@ export function GuestForm({ guest, onChange, onSubmit, isEditing, onCancel }: Gu
       </CardContent>
     </Card>
   );
-}
-```
+};
+
+export { GuestForm };
