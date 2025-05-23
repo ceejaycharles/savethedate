@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import Papa from 'npm:papaparse';
+import Papa from 'papaparse';
 
 export async function importGuests(eventId: string, csvContent: string) {
   try {
@@ -24,3 +24,5 @@ export async function importGuests(eventId: string, csvContent: string) {
     throw error;
   }
 }
+
+export { importGuests }
