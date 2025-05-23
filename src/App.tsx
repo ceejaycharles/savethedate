@@ -28,6 +28,7 @@ import BudgetPage from './pages/dashboard/BudgetPage';
 import VendorsPage from './pages/dashboard/VendorsPage';
 import CustomQuestionsPage from './pages/dashboard/CustomQuestionsPage';
 import PaymentMethodsPage from './pages/dashboard/PaymentMethodsPage';
+import ThemeBuilderPage from './pages/dashboard/ThemeBuilderPage';
 import PublicEventPage from './pages/public/PublicEventPage';
 import RsvpPage from './pages/public/RsvpPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -66,6 +67,7 @@ function App() {
               <Route path="events/:eventId/budget" element={<BudgetPage />} />
               <Route path="events/:eventId/vendors" element={<VendorsPage />} />
               <Route path="events/:eventId/questions" element={<CustomQuestionsPage />} />
+              <Route path="events/:eventId/theme" element={<ThemeBuilderPage />} />
             </Route>
             
             {/* 404 route */}
