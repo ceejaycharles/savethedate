@@ -19,7 +19,7 @@ interface GuestFormProps {
   onCancel?: () => void;
 }
 
-const GuestForm = ({ guest, onChange, onSubmit, isEditing, onCancel }: GuestFormProps) => {
+export function GuestForm({ guest, onChange, onSubmit, isEditing, onCancel }: GuestFormProps) {
   return (
     <Card>
       <CardContent className="p-6">
@@ -94,6 +94,4 @@ const GuestForm = ({ guest, onChange, onSubmit, isEditing, onCancel }: GuestForm
       </CardContent>
     </Card>
   );
-};
-
-export { GuestForm };
+}

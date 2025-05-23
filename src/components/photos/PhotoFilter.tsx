@@ -1,7 +1,7 @@
 import React from 'react';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
-import { Tag, Search, Filter } from 'lucide-react';
+import { Tag, Search } from 'lucide-react';
 
 interface PhotoFilterProps {
   tags: string[];
@@ -10,7 +10,7 @@ interface PhotoFilterProps {
   onSearch: (query: string) => void;
 }
 
-export default function PhotoFilter({ tags, selectedTags, onTagSelect, onSearch }: PhotoFilterProps) {
+export function PhotoFilter({ tags, selectedTags, onTagSelect, onSearch }: PhotoFilterProps) {
   return (
     <div className="space-y-4">
       <div>
@@ -45,4 +45,4 @@ export default function PhotoFilter({ tags, selectedTags, onTagSelect, onSearch 
   );
 }
 
-export { PhotoFilter }
+export default PhotoFilter;
