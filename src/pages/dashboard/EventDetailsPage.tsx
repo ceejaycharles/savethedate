@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import { useSupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../lib/database.types';
 import { Card, CardContent } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
