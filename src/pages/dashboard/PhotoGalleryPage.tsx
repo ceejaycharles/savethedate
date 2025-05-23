@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Camera, Upload, Trash2, Lock, Globe, Eye, Settings, Album } from 'lucide-react';
+import { Camera, Upload, Trash2, Lock, Globe, Eye, Settings, Download, Tag } from 'lucide-react';
 import { Database } from '../../lib/database.types';
 import { supabase } from '../../lib/supabase';
 import Button from '../../components/ui/Button';
@@ -19,36 +19,22 @@ const PhotoGalleryPage = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
+  const [currentAlbum, setCurrentAlbum] = useState<string | null>(null);
   const [showAlbumModal, setShowAlbumModal] = useState(false);
-  const [selectedAlbum, setSelectedAlbum] = useState<string | null>(null);
+  const [editingAlbum, setEditingAlbum] = useState<Album | null>(null);
 
   useEffect(() => {
-    fetchAlbums();
     fetchPhotos();
+    fetchAlbums();
   }, [eventId]);
-
-  const fetchAlbums = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('photo_albums')
-        .select('*')
-        .eq('event_id', eventId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setAlbums(data || []);
-    } catch (error) {
-      console.error('Error fetching albums:', error);
-      toast.error('Failed to load albums');
-    }
-  };
 
   const fetchPhotos = async () => {
     try {
       const { data, error } = await supabase
         .from('photos')
-        .select('*')
+        .select('*, photo_tags(*)')
         .eq('event_id', eventId)
+        .eq(currentAlbum ? 'album_id' : 'album_id', currentAlbum)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -61,22 +47,37 @@ const PhotoGalleryPage = () => {
     }
   };
 
-  const handleCreateAlbum = async (data: { name: string; description: string }) => {
+  const fetchAlbums = async () => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('photo_albums')
-        .insert([
-          {
-            event_id: eventId,
-            name: data.name,
-            description: data.description
-          }
-        ]);
+        .select('*')
+        .eq('event_id', eventId)
+        .order('created_at', { ascending: true });
 
       if (error) throw error;
+      setAlbums(data || []);
+    } catch (error) {
+      console.error('Error fetching albums:', error);
+      toast.error('Failed to load albums');
+    }
+  };
 
+  const handleCreateAlbum = async (albumData: { name: string; description: string }) => {
+    try {
+      const { data, error } = await supabase
+        .from('photo_albums')
+        .insert({
+          event_id: eventId,
+          name: albumData.name,
+          description: albumData.description,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      setAlbums([...albums, data]);
       setShowAlbumModal(false);
-      fetchAlbums();
       toast.success('Album created successfully');
     } catch (error) {
       console.error('Error creating album:', error);
@@ -84,21 +85,85 @@ const PhotoGalleryPage = () => {
     }
   };
 
-  const handleMoveToAlbum = async (albumId: string) => {
+  const handleUpdateAlbum = async (albumData: { name: string; description: string }) => {
+    if (!editingAlbum) return;
+
     try {
       const { error } = await supabase
-        .from('photos')
-        .update({ album_id: albumId })
-        .in('id', selectedPhotos);
+        .from('photo_albums')
+        .update({
+          name: albumData.name,
+          description: albumData.description,
+        })
+        .eq('id', editingAlbum.id);
 
       if (error) throw error;
 
-      setSelectedPhotos([]);
-      fetchPhotos();
-      toast.success('Photos moved to album');
+      setAlbums(albums.map(album => 
+        album.id === editingAlbum.id 
+          ? { ...album, ...albumData }
+          : album
+      ));
+      setEditingAlbum(null);
+      toast.success('Album updated successfully');
     } catch (error) {
-      console.error('Error moving photos:', error);
-      toast.error('Failed to move photos');
+      console.error('Error updating album:', error);
+      toast.error('Failed to update album');
+    }
+  };
+
+  const handleDeleteAlbum = async (albumId: string) => {
+    try {
+      const { error } = await supabase
+        .from('photo_albums')
+        .delete()
+        .eq('id', albumId);
+
+      if (error) throw error;
+
+      setAlbums(albums.filter(album => album.id !== albumId));
+      if (currentAlbum === albumId) {
+        setCurrentAlbum(null);
+      }
+      toast.success('Album deleted successfully');
+    } catch (error) {
+      console.error('Error deleting album:', error);
+      toast.error('Failed to delete album');
+    }
+  };
+
+  const handleDownloadPhotos = async () => {
+    const photosToDownload = selectedPhotos.length > 0 
+      ? photos.filter(photo => selectedPhotos.includes(photo.id))
+      : photos;
+
+    for (const photo of photosToDownload) {
+      const link = document.createElement('a');
+      link.href = photo.image_url;
+      link.download = `photo-${photo.id}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    toast.success(`${photosToDownload.length} photos queued for download`);
+  };
+
+  const handleAddTag = async (photoId: string, tag: string) => {
+    try {
+      const { error } = await supabase
+        .from('photo_tags')
+        .insert({
+          photo_id: photoId,
+          tag: tag.toLowerCase(),
+        });
+
+      if (error) throw error;
+      fetchPhotos();
+      toast.success('Tag added successfully');
+    } catch (error) {
+      console.error('Error adding tag:', error);
+      toast.error('Failed to add tag');
     }
   };
 
@@ -114,26 +179,24 @@ const PhotoGalleryPage = () => {
         const fileExt = file.name.split('.').pop();
         const fileName = `${eventId}/${Math.random().toString(36).substring(2)}.${fileExt}`;
 
-        // Upload to Storage
         const { error: uploadError } = await supabase.storage
           .from('event_photos')
           .upload(fileName, file);
 
         if (uploadError) throw uploadError;
 
-        // Get public URL
         const { data: { publicUrl } } = supabase.storage
           .from('event_photos')
           .getPublicUrl(fileName);
 
-        // Create photo record
         const { error: dbError } = await supabase
           .from('photos')
           .insert({
             event_id: eventId,
             user_id_uploader: user!.id,
             image_url: publicUrl,
-            privacy_setting: 'event'
+            privacy_setting: 'event',
+            album_id: currentAlbum
           });
 
         if (dbError) throw dbError;
@@ -206,10 +269,10 @@ const PhotoGalleryPage = () => {
             <>
               <Button
                 variant="outline"
-                onClick={() => setShowAlbumModal(true)}
+                onClick={handleDownloadPhotos}
               >
-                <Album className="w-4 h-4 mr-2" />
-                Move to Album
+                <Download className="w-4 h-4 mr-2" />
+                Download Selected
               </Button>
               <Button
                 variant="destructive"
@@ -241,94 +304,69 @@ const PhotoGalleryPage = () => {
         </div>
       </div>
 
-      {/* Album Grid */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Albums</h2>
+      {currentAlbum === null ? (
         <AlbumGrid
           albums={albums}
           onCreateAlbum={() => setShowAlbumModal(true)}
-          onSelectAlbum={setSelectedAlbum}
+          onSelectAlbum={setCurrentAlbum}
         />
-      </div>
-
-      {/* Photos Grid */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">
-          {selectedAlbum ? 'Album Photos' : 'All Photos'}
-        </h2>
-        {photos.length === 0 ? (
-          <Card className="p-8 text-center">
-            <Camera className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-            <h2 className="text-xl font-semibold mb-2">No Photos Yet</h2>
-            <p className="text-gray-600 mb-4">Start capturing memories by uploading photos of your event.</p>
-            <label className="cursor-pointer">
-              <Button variant="outline">
-                <Upload className="w-4 h-4 mr-2" />
-                Upload Your First Photo
-              </Button>
-              <input
-                type="file"
-                className="hidden"
-                accept="image/*"
-                multiple
-                onChange={handleFileUpload}
-                disabled={uploading}
-              />
-            </label>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {photos.map((photo) => (
-              <Card key={photo.id} className="overflow-hidden group relative">
-                <div className="relative aspect-square">
-                  <img
-                    src={photo.image_url}
-                    alt={photo.caption || 'Event photo'}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity" />
-                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="bg-white"
-                      onClick={() => {
-                        const newPrivacy = photo.privacy_setting === 'public' ? 'event' : 'public';
-                        updatePrivacy(photo.id, newPrivacy);
-                      }}
-                    >
-                      {photo.privacy_setting === 'public' ? (
-                        <Globe className="w-4 h-4" />
-                      ) : (
-                        <Lock className="w-4 h-4" />
-                      )}
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete(photo.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {photos.map((photo) => (
+            <Card key={photo.id} className="overflow-hidden group relative">
+              <div className="relative aspect-square">
+                <img
+                  src={photo.image_url}
+                  alt={photo.caption || 'Event photo'}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity" />
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-white"
+                    onClick={() => {
+                      const newPrivacy = photo.privacy_setting === 'public' ? 'event' : 'public';
+                      updatePrivacy(photo.id, newPrivacy);
+                    }}
+                  >
+                    {photo.privacy_setting === 'public' ? (
+                      <Globe className="w-4 h-4" />
+                    ) : (
+                      <Lock className="w-4 h-4" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDelete(photo.id)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
-                {photo.caption && (
-                  <CardContent className="p-4">
-                    <p className="text-sm text-gray-600">{photo.caption}</p>
-                  </CardContent>
-                )}
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+              </div>
+              {photo.caption && (
+                <CardContent className="p-4">
+                  <p className="text-sm text-gray-600">{photo.caption}</p>
+                </CardContent>
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
 
-      {/* Album Modal */}
-      <AlbumModal
-        isOpen={showAlbumModal}
-        onClose={() => setShowAlbumModal(false)}
-        onSave={handleCreateAlbum}
-      />
+      {showAlbumModal && (
+        <AlbumModal
+          isOpen={showAlbumModal}
+          onClose={() => {
+            setShowAlbumModal(false);
+            setEditingAlbum(null);
+          }}
+          onSave={editingAlbum ? handleUpdateAlbum : handleCreateAlbum}
+          initialData={editingAlbum || undefined}
+        />
+      )}
     </div>
   );
 };
