@@ -18,4 +18,17 @@ export const emailTemplates = {
   RSVP_CONFIRMATION: 'rsvp_confirmation',
   GIFT_THANK_YOU: 'gift_thank_you',
   PASSWORD_RESET: 'password_reset',
+  RSVP_REMINDER: 'rsvp_reminder',
 };
+
+export async function sendInvitation(eventId: string, guestIds: string[]) {
+  const { data, error } = await supabase.functions.invoke('send-invitation', {
+    body: JSON.stringify({
+      eventId,
+      guestIds,
+    }),
+  });
+
+  if (error) throw error;
+  return data;
+}
