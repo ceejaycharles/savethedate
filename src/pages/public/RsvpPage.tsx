@@ -5,6 +5,7 @@ import { Card, CardContent } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { MealSelection } from '../../components/rsvp/MealSelection';
+import { CustomQuestions } from '../../components/rsvp/CustomQuestions';
 import { Calendar, MapPin, Clock, Users, X, Check } from 'lucide-react';
 import { formatDate, formatTime } from '../../lib/utils';
 import toast from 'react-hot-toast';
@@ -190,6 +191,11 @@ const RsvpPage = () => {
                     eventId={invitation.event.id}
                     guestId={invitation.guest.id}
                     guestCount={rsvpData.guestCount}
+                  />
+
+                  <CustomQuestions
+                    eventId={invitation.event.id}
+                    guestId={invitation.guest.id}
                   />
 
                   <div>

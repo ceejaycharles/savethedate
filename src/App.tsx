@@ -26,6 +26,7 @@ import MealOptionsPage from './pages/dashboard/MealOptionsPage';
 import PublicEventPage from './pages/public/PublicEventPage';
 import RsvpPage from './pages/public/RsvpPage';
 import NotFoundPage from './pages/NotFoundPage';
+import CustomQuestionsPage from './pages/dashboard/CustomQuestionsPage';
 
 function App() {
   return (
@@ -56,6 +57,7 @@ function App() {
               <Route path="events/:eventId/meals" element={<MealOptionsPage />} />
               <Route path="events/:eventId/gifts" element={<GiftRegistryPage />} />
               <Route path="events/:eventId/photos" element={<PhotoGalleryPage />} />
+              <Route path="events/:eventId/questions" element={<CustomQuestionsPage />} />
             </Route>
             
             {/* 404 route */}
