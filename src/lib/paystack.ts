@@ -60,5 +60,3 @@ export async function initializeTransaction(config: PaystackConfig) {
     throw error;
   }
 }
-
-export { initializeTransaction }
