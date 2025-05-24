@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Calendar, MapPin, FileText, Image, Users, Globe, Lock, Gift } from 'lucide-react';
@@ -31,33 +31,9 @@ const CreateEventPage = () => {
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [userProfile, setUserProfile] = useState<any>(null);
-
-  useEffect(() => {
-    if (user?.id) {
-      fetchUserProfile();
-    }
-  }, [user]);
-
-  const fetchUserProfile = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', user?.id)
-        .single();
-
-      if (error) throw error;
-      setUserProfile(data);
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      setError('Failed to load user profile');
-    }
-  };
-
+  
   const {
     register,
-    control,
     handleSubmit,
     formState: { errors },
   } = useForm<EventFormValues>({
@@ -89,7 +65,7 @@ const CreateEventPage = () => {
       const fileExt = coverImageFile.name.split('.').pop();
       const fileName = `${user.id}/${Math.random().toString(36).substring(2)}.${fileExt}`;
       
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('event_covers')
         .upload(fileName, coverImageFile);
       
@@ -116,12 +92,7 @@ const CreateEventPage = () => {
       setError('You must be logged in to create an event');
       return;
     }
-
-    if (!userProfile) {
-      setError('User profile not found. Please try logging out and back in.');
-      return;
-    }
-
+    
     try {
       // Upload cover image if provided
       let imageUrl = null;
@@ -130,7 +101,7 @@ const CreateEventPage = () => {
       }
       
       // Create event in database
-      const { data: event, error: eventError } = await supabase
+      const { data: event, error } = await supabase
         .from('events')
         .insert([
           {
@@ -148,9 +119,9 @@ const CreateEventPage = () => {
         ])
         .select()
         .single();
-
-      if (eventError) throw eventError;
-
+      
+      if (error) throw error;
+      
       toast.success('Event created successfully!');
       navigate(`/dashboard/events/${event.id}`);
     } catch (error) {
