@@ -35,7 +35,7 @@ const RsvpPage = () => {
           *,
           event:events(*),
           guest:guests(*),
-          rsvp:rsvps(*)
+          rsvps(*)
         `)
         .eq('id', invitationId)
         .single();
@@ -43,12 +43,12 @@ const RsvpPage = () => {
       if (error) throw error;
 
       setInvitation(data);
-      if (data.rsvp?.[0]) {
+      if (data.rsvps?.[0]) {
         setRsvpData({
-          status: data.rsvp[0].status,
-          guestCount: data.rsvp[0].guest_count,
-          dietaryRestrictions: data.rsvp[0].dietary_restrictions || '',
-          message: data.rsvp[0].message || '',
+          status: data.rsvps[0].status,
+          guestCount: data.rsvps[0].guest_count,
+          dietaryRestrictions: data.rsvps[0].dietary_restrictions || '',
+          message: data.rsvps[0].message || '',
         });
       }
     } catch (error) {
