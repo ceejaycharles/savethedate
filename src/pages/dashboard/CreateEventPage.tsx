@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -96,30 +96,6 @@ const CreateEventPage = () => {
     }
 
     try {
-      // First check if the user exists in the users table
-      const { data: userExists, error: userCheckError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('id', user.id)
-        .single();
-
-      if (userCheckError || !userExists) {
-        // If user doesn't exist in the users table, create them first
-        const { error: createUserError } = await supabase
-          .from('users')
-          .insert([
-            {
-              id: user.id,
-              email: user.email,
-              full_name: user.user_metadata?.full_name || 'Anonymous',
-            },
-          ]);
-
-        if (createUserError) {
-          throw new Error('Failed to create user profile');
-        }
-      }
-      
       // Upload cover image if provided
       let imageUrl = null;
       if (coverImageFile) {
