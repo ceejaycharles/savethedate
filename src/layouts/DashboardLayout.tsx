@@ -36,19 +36,8 @@ const DashboardLayout = () => {
 
   const checkAdminStatus = async () => {
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', user?.id)
-        .maybeSingle();
-      
-      if (error) {
-        console.error('Error fetching user role:', error);
-        setIsAdmin(false);
-        return;
-      }
-
-      setIsAdmin(data?.role === 'admin' || false);
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      setIsAdmin(authUser?.app_metadata?.role === 'admin' || authUser?.app_metadata?.role === 'superadmin');
     } catch (error) {
       console.error('Error checking admin status:', error);
       setIsAdmin(false);
