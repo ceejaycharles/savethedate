@@ -39,7 +39,6 @@ const PhotoGalleryPage = () => {
       const { data, error } = await supabase
         .from('photo_tags')
         .select('tag')
-        .distinct()
         .eq('photo_id', 'in', (
           supabase
             .from('photos')
@@ -48,7 +47,10 @@ const PhotoGalleryPage = () => {
         ));
 
       if (error) throw error;
-      setAvailableTags(data.map(t => t.tag));
+
+      // Get unique tags using Set
+      const uniqueTags = Array.from(new Set(data.map(t => t.tag)));
+      setAvailableTags(uniqueTags);
     } catch (error) {
       console.error('Error fetching tags:', error);
     }
