@@ -29,45 +29,109 @@ serve(async (req) => {
       .eq("id", eventId)
       .single();
 
+    if (!event) {
+      throw new Error("Event not found");
+    }
+
     // Get guest details
     const { data: guests } = await supabaseClient
       .from("guests")
       .select("*")
       .in("id", guestIds);
 
-    // Send invitations
-    for (const guest of guests) {
-      const invitationLink = `${Deno.env.get("PUBLIC_SITE_URL")}/rsvp/${guest.id}`;
-
-      await resend.emails.send({
-        from: "SaveTheDate <noreply@savethedate.ng>",
-        to: guest.email,
-        subject: `You're invited to ${event.name}!`,
-        html: `
-          <h1>You're Invited!</h1>
-          <p>Dear ${guest.name},</p>
-          <p>${event.users.full_name} has invited you to ${event.name}.</p>
-          <p>When: ${new Date(event.date_start).toLocaleString()}</p>
-          <p>Where: ${event.location}</p>
-          <p><a href="${invitationLink}">Click here to RSVP</a></p>
-        `,
-      });
-
-      // Update invitation status
-      await supabaseClient
-        .from("invitations")
-        .update({ status: "sent" })
-        .eq("guest_id", guest.id);
+    if (!guests?.length) {
+      throw new Error("No guests found");
     }
 
+    // Send invitations
+    const emailPromises = guests.map(async (guest) => {
+      try {
+        // Create invitation record
+        const { data: invitation } = await supabaseClient
+          .from("invitations")
+          .insert({
+            event_id: eventId,
+            guest_id: guest.id,
+            status: "sent",
+            invitation_link: crypto.randomUUID(),
+          })
+          .select()
+          .single();
+
+        if (!invitation) {
+          throw new Error("Failed to create invitation");
+        }
+
+        const invitationLink = `${Deno.env.get("PUBLIC_SITE_URL")}/rsvp/${invitation.invitation_link}`;
+
+        // Send email using Resend
+        await resend.emails.send({
+          from: "SaveTheDate <noreply@savethedate.ng>",
+          to: guest.email,
+          subject: `You're invited to ${event.name}!`,
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+              <h1 style="color: #4F46E5;">You're Invited!</h1>
+              <p>Dear ${guest.name},</p>
+              <p>${event.users.full_name} has invited you to ${event.name}.</p>
+              <div style="margin: 24px 0;">
+                <p><strong>When:</strong> ${new Date(event.date_start).toLocaleString()}</p>
+                <p><strong>Where:</strong> ${event.location}</p>
+                ${event.description ? `<p><strong>Details:</strong> ${event.description}</p>` : ''}
+              </div>
+              <a href="${invitationLink}" 
+                 style="display: inline-block; background-color: #4F46E5; color: white; 
+                        padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+                Click here to RSVP
+              </a>
+            </div>
+          `,
+        });
+
+        // Log successful send
+        await supabaseClient
+          .from("system_logs")
+          .insert({
+            level: "info",
+            message: "Invitation email sent successfully",
+            metadata: {
+              event_id: eventId,
+              guest_id: guest.id,
+              invitation_id: invitation.id,
+            },
+          });
+
+      } catch (error) {
+        // Log error
+        await supabaseClient
+          .from("system_logs")
+          .insert({
+            level: "error",
+            message: "Failed to send invitation email",
+            metadata: {
+              error: error.message,
+              event_id: eventId,
+              guest_id: guest.id,
+            },
+          });
+
+        throw error;
+      }
+    });
+
+    // Wait for all emails to be sent
+    await Promise.all(emailPromises);
+
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ success: true, count: guests.length }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       }
     );
   } catch (error) {
+    console.error("Error sending invitations:", error);
+
     return new Response(
       JSON.stringify({ error: error.message }),
       {
