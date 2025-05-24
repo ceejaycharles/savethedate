@@ -22,7 +22,7 @@ export async function initializeTransaction(config: PaystackConfig) {
     const response = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer sk_test_${PAYSTACK_PUBLIC_KEY}`,
+        'Authorization': `Bearer ${PAYSTACK_PUBLIC_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
