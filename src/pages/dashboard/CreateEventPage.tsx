@@ -10,6 +10,7 @@ import { Card, CardContent } from '../../components/ui/Card';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { eventTypes } from '../../lib/utils';
+import toast from 'react-hot-toast';
 
 const eventSchema = z.object({
   name: z.string().min(3, 'Event name must be at least 3 characters'),
@@ -96,6 +97,18 @@ const CreateEventPage = () => {
     }
 
     try {
+      // First verify the user exists in the users table
+      const { data: userProfile, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (userError || !userProfile) {
+        setError('User profile not found. Please try logging out and back in.');
+        return;
+      }
+
       // Upload cover image if provided
       let imageUrl = null;
       if (coverImageFile) {
@@ -126,11 +139,12 @@ const CreateEventPage = () => {
         throw eventError;
       }
       
-      // Navigate to the event details page
+      toast.success('Event created successfully!');
       navigate(`/dashboard/events/${event.id}`);
     } catch (error) {
       console.error('Error creating event:', error);
       setError('Failed to create event. Please try again.');
+      toast.error('Failed to create event');
     }
   };
 
