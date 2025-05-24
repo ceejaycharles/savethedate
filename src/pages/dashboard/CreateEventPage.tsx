@@ -29,6 +29,7 @@ const CreateEventPage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
   const {
     register,
@@ -87,9 +88,38 @@ const CreateEventPage = () => {
   };
 
   const onSubmit = async (data: EventFormValues) => {
-    if (!user) return;
+    setError(null);
     
+    if (!user?.id) {
+      setError('You must be logged in to create an event');
+      return;
+    }
+
     try {
+      // First check if the user exists in the users table
+      const { data: userExists, error: userCheckError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (userCheckError || !userExists) {
+        // If user doesn't exist in the users table, create them first
+        const { error: createUserError } = await supabase
+          .from('users')
+          .insert([
+            {
+              id: user.id,
+              email: user.email,
+              full_name: user.user_metadata?.full_name || 'Anonymous',
+            },
+          ]);
+
+        if (createUserError) {
+          throw new Error('Failed to create user profile');
+        }
+      }
+      
       // Upload cover image if provided
       let imageUrl = null;
       if (coverImageFile) {
@@ -97,7 +127,7 @@ const CreateEventPage = () => {
       }
       
       // Create event in database
-      const { data: event, error } = await supabase
+      const { data: event, error: eventError } = await supabase
         .from('events')
         .insert([
           {
@@ -116,14 +146,15 @@ const CreateEventPage = () => {
         .select()
         .single();
       
-      if (error) {
-        throw error;
+      if (eventError) {
+        throw eventError;
       }
       
       // Navigate to the event details page
       navigate(`/dashboard/events/${event.id}`);
     } catch (error) {
       console.error('Error creating event:', error);
+      setError('Failed to create event. Please try again.');
     }
   };
 
@@ -133,6 +164,12 @@ const CreateEventPage = () => {
         <h1 className="text-2xl font-bold tracking-tight">Create New Event</h1>
         <p className="text-gray-500 mt-1">Set up the details for your special occasion</p>
       </div>
+      
+      {error && (
+        <div className="mb-6 p-4 bg-error-50 border border-error-200 rounded-lg">
+          <p className="text-error-600">{error}</p>
+        </div>
+      )}
       
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
