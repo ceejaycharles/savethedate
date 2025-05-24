@@ -5,7 +5,7 @@ import { Database } from '../../lib/database.types';
 import { supabase } from '../../lib/supabase';
 import Button from '../../components/ui/Button';
 import { Card, CardContent } from '../../components/ui/Card';
-import { AlbumGrid } from '../../components/photos/AlbumGrid';
+import AlbumGrid from '../../components/photos/AlbumGrid';
 import { AlbumModal } from '../../components/photos/AlbumModal';
 import { PhotoUploader } from '../../components/photos/PhotoUploader';
 import { PhotoFilter } from '../../components/photos/PhotoFilter';

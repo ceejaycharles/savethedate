@@ -1,4 +1,3 @@
-```typescript
 import React from 'react';
 import { Card, CardContent } from '../ui/Card';
 import { Image, Plus } from 'lucide-react';
@@ -17,7 +16,7 @@ interface AlbumGridProps {
   onSelectAlbum: (albumId: string) => void;
 }
 
-export function AlbumGrid({ albums, onCreateAlbum, onSelectAlbum }: AlbumGridProps) {
+const AlbumGrid = ({ albums, onCreateAlbum, onSelectAlbum }: AlbumGridProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {albums.map((album) => (
@@ -61,5 +60,6 @@ export function AlbumGrid({ albums, onCreateAlbum, onSelectAlbum }: AlbumGridPro
       </Card>
     </div>
   );
-}
-```
+};
+
+export default AlbumGrid;
