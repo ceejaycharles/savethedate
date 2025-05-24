@@ -67,3 +67,5 @@ export default function AlbumModal({ isOpen, onClose, onSave, initialData }: Alb
     </div>
   );
 }
+
+export { AlbumModal }
