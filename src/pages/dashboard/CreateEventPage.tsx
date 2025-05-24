@@ -31,12 +31,35 @@ const CreateEventPage = () => {
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
+  const [userProfile, setUserProfile] = useState<any>(null);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchUserProfile();
+    }
+  }, [user]);
+
+  const fetchUserProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user?.id)
+        .single();
+
+      if (error) throw error;
+      setUserProfile(data);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      setError('Failed to load user profile');
+    }
+  };
+
   const {
     register,
     control,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
@@ -62,7 +85,6 @@ const CreateEventPage = () => {
     if (!coverImageFile || !user) return null;
     
     setIsUploading(true);
-    
     try {
       const fileExt = coverImageFile.name.split('.').pop();
       const fileName = `${user.id}/${Math.random().toString(36).substring(2)}.${fileExt}`;
@@ -71,9 +93,7 @@ const CreateEventPage = () => {
         .from('event_covers')
         .upload(fileName, coverImageFile);
       
-      if (uploadError) {
-        throw uploadError;
-      }
+      if (uploadError) throw uploadError;
       
       const { data: { publicUrl } } = supabase.storage
         .from('event_covers')
@@ -82,6 +102,7 @@ const CreateEventPage = () => {
       return publicUrl;
     } catch (error) {
       console.error('Error uploading image:', error);
+      toast.error('Failed to upload cover image');
       return null;
     } finally {
       setIsUploading(false);
@@ -90,25 +111,18 @@ const CreateEventPage = () => {
 
   const onSubmit = async (data: EventFormValues) => {
     setError(null);
-    
+
     if (!user?.id) {
       setError('You must be logged in to create an event');
       return;
     }
 
+    if (!userProfile) {
+      setError('User profile not found. Please try logging out and back in.');
+      return;
+    }
+
     try {
-      // First verify the user exists in the users table
-      const { data: userProfile, error: userError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('id', user.id)
-        .single();
-
-      if (userError || !userProfile) {
-        setError('User profile not found. Please try logging out and back in.');
-        return;
-      }
-
       // Upload cover image if provided
       let imageUrl = null;
       if (coverImageFile) {
@@ -134,11 +148,9 @@ const CreateEventPage = () => {
         ])
         .select()
         .single();
-      
-      if (eventError) {
-        throw eventError;
-      }
-      
+
+      if (eventError) throw eventError;
+
       toast.success('Event created successfully!');
       navigate(`/dashboard/events/${event.id}`);
     } catch (error) {
@@ -386,7 +398,7 @@ const CreateEventPage = () => {
                 type="submit"
                 variant="primary"
                 className="w-full"
-                isLoading={isSubmitting || isUploading}
+                isLoading={isUploading}
               >
                 Create Event
               </Button>
