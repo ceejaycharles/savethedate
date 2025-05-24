@@ -17,7 +17,7 @@ import {
   CreditCard 
 } from 'lucide-react';
 import Button from '../components/ui/Button';
-import { supabase } from '../lib/supabase';
+import { supabase, adminSupabase } from '../lib/supabase';
 
 const DashboardLayout = () => {
   const { user, signOut } = useAuth();
@@ -36,7 +36,7 @@ const DashboardLayout = () => {
 
   const checkAdminStatus = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await adminSupabase
         .from('users')
         .select('role')
         .eq('id', user?.id)
