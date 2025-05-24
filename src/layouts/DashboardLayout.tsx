@@ -262,5 +262,3 @@ const DashboardLayout = () => {
 };
 
 export default DashboardLayout;
-
-export default DashboardLayout
