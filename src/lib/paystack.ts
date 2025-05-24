@@ -60,17 +60,3 @@ export async function initializeTransaction(config: PaystackConfig) {
     throw error;
   }
 }
-
-export async function verifyPayment(reference: string) {
-  try {
-    const { data: functionData, error } = await supabase.functions.invoke('process-payment', {
-      body: JSON.stringify({ reference }),
-    });
-
-    if (error) throw error;
-    return functionData;
-  } catch (error) {
-    console.error('Payment verification error:', error);
-    throw error;
-  }
-}
