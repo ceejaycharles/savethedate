@@ -126,19 +126,21 @@ const GiftRegistryPage = () => {
   const handleContribute = async (item: GiftItem) => {
     try {
       const user = (await supabase.auth.getUser()).data.user;
-      const email = user?.email || '';
+      if (!user?.email) {
+        throw new Error('User email not found');
+      }
 
-      const response = await initializeTransaction(
-        item.desired_price,
-        email,
-        {
+      const response = await initializeTransaction({
+        email: user.email,
+        amount: item.desired_price,
+        metadata: {
           gift_item_id: item.id,
-          event_id: eventId,
+          event_id: eventId!,
         }
-      );
+      });
 
-      if (response.status && response.data.authorization_url) {
-        window.location.href = response.data.authorization_url;
+      if (response.authorization_url) {
+        window.location.href = response.authorization_url;
       } else {
         throw new Error('Failed to initialize payment');
       }
