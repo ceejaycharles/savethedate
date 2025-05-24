@@ -34,15 +34,23 @@ const DashboardLayout = () => {
 
   const checkAdminStatus = async () => {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('users')
         .select('role')
         .eq('id', user?.id)
-        .single();
+        .maybeSingle();
       
-      setIsAdmin(data?.role === 'admin');
+      if (error) {
+        console.error('Error fetching user role:', error);
+        setIsAdmin(false);
+        return;
+      }
+
+      // Set admin status based on data, defaulting to false if no data
+      setIsAdmin(data?.role === 'admin' || false);
     } catch (error) {
       console.error('Error checking admin status:', error);
+      setIsAdmin(false);
     }
   };
 
