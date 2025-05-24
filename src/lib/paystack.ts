@@ -12,8 +12,13 @@ interface PaystackConfig {
   callback_url?: string;
 }
 
-export async function initializePayment(config: PaystackConfig) {
+export async function initializeTransaction(config: PaystackConfig) {
   try {
+    // Validate Paystack key
+    if (!PAYSTACK_PUBLIC_KEY) {
+      throw new Error('Paystack public key not found');
+    }
+
     const response = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
       headers: {
@@ -24,14 +29,14 @@ export async function initializePayment(config: PaystackConfig) {
         email: config.email,
         amount: Math.round(config.amount * 100), // Convert to kobo
         metadata: config.metadata,
-        callback_url: config.callback_url || window.location.origin + '/payment/callback',
+        callback_url: config.callback_url || `${window.location.origin}/payment/callback`,
       }),
     });
 
     const data = await response.json();
     
     if (!data.status) {
-      throw new Error(data.message);
+      throw new Error(data.message || 'Payment initialization failed');
     }
 
     // Create transaction record
@@ -46,7 +51,10 @@ export async function initializePayment(config: PaystackConfig) {
 
     if (transactionError) throw transactionError;
 
-    return data.data;
+    return {
+      authorization_url: data.data.authorization_url,
+      reference: data.data.reference,
+    };
   } catch (error) {
     console.error('Payment initialization error:', error);
     throw error;
