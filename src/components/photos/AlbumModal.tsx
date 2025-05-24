@@ -1,4 +1,3 @@
-```typescript
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '../ui/Button';
@@ -14,7 +13,7 @@ interface AlbumModalProps {
   };
 }
 
-export function AlbumModal({ isOpen, onClose, onSave, initialData }: AlbumModalProps) {
+export default function AlbumModal({ isOpen, onClose, onSave, initialData }: AlbumModalProps) {
   const [name, setName] = useState(initialData?.name || '');
   const [description, setDescription] = useState(initialData?.description || '');
 
@@ -68,4 +67,3 @@ export function AlbumModal({ isOpen, onClose, onSave, initialData }: AlbumModalP
     </div>
   );
 }
-```
