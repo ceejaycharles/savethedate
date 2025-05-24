@@ -20,17 +20,12 @@ import AdminDashboardPage from './pages/dashboard/AdminDashboardPage';
 import CreateEventPage from './pages/dashboard/CreateEventPage';
 import EventDetailsPage from './pages/dashboard/EventDetailsPage';
 import GuestListPage from './pages/dashboard/GuestListPage';
-import GuestAnalyticsPage from './pages/dashboard/GuestAnalyticsPage';
 import MealOptionsPage from './pages/dashboard/MealOptionsPage';
 import GiftRegistryPage from './pages/dashboard/GiftRegistryPage';
 import PhotoGalleryPage from './pages/dashboard/PhotoGalleryPage';
 import BudgetPage from './pages/dashboard/BudgetPage';
 import VendorsPage from './pages/dashboard/VendorsPage';
 import CustomQuestionsPage from './pages/dashboard/CustomQuestionsPage';
-import PaymentMethodsPage from './pages/dashboard/PaymentMethodsPage';
-import ThemeBuilderPage from './pages/dashboard/ThemeBuilderPage';
-import TimelinePage from './pages/dashboard/TimelinePage';
-import TasksPage from './pages/dashboard/TasksPage';
 import PublicEventPage from './pages/public/PublicEventPage';
 import RsvpPage from './pages/public/RsvpPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -39,7 +34,10 @@ function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <Router>
+        <Router future={{ 
+          v7_startTransition: true,
+          v7_relativeSplatPath: true
+        }}>
           <Toaster position="top-right" />
           <Routes>
             {/* Public routes */}
@@ -59,19 +57,14 @@ function App() {
               <Route index element={<DashboardPage />} />
               <Route path="admin" element={<AdminDashboardPage />} />
               <Route path="create-event" element={<CreateEventPage />} />
-              <Route path="payment-methods" element={<PaymentMethodsPage />} />
               <Route path="events/:eventId" element={<EventDetailsPage />} />
               <Route path="events/:eventId/guests" element={<GuestListPage />} />
-              <Route path="events/:eventId/analytics" element={<GuestAnalyticsPage />} />
               <Route path="events/:eventId/meals" element={<MealOptionsPage />} />
               <Route path="events/:eventId/gifts" element={<GiftRegistryPage />} />
               <Route path="events/:eventId/photos" element={<PhotoGalleryPage />} />
               <Route path="events/:eventId/budget" element={<BudgetPage />} />
               <Route path="events/:eventId/vendors" element={<VendorsPage />} />
               <Route path="events/:eventId/questions" element={<CustomQuestionsPage />} />
-              <Route path="events/:eventId/theme" element={<ThemeBuilderPage />} />
-              <Route path="events/:eventId/timeline" element={<TimelinePage />} />
-              <Route path="events/:eventId/tasks" element={<TasksPage />} />
             </Route>
             
             {/* 404 route */}
