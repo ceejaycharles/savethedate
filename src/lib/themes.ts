@@ -9,6 +9,11 @@ export interface ThemeColors {
   heading: string
 }
 
+export interface ThemeFonts {
+  heading: string
+  body: string
+}
+
 export const defaultThemeColors: ThemeColors = {
   primary: '#4F46E5',
   secondary: '#10B981',
@@ -16,6 +21,11 @@ export const defaultThemeColors: ThemeColors = {
   background: '#FFFFFF',
   text: '#1F2937',
   heading: '#111827'
+}
+
+export const defaultThemeFonts: ThemeFonts = {
+  heading: 'serif',
+  body: 'sans-serif'
 }
 
 export const themes: Theme[] = [
@@ -29,6 +39,10 @@ export const themes: Theme[] = [
       background: '#FFFFFF',
       text: '#1A202C',
       heading: '#2D3748'
+    },
+    fonts: {
+      heading: 'Playfair Display, serif',
+      body: 'Lato, sans-serif'
     }
   },
   {
@@ -41,6 +55,10 @@ export const themes: Theme[] = [
       background: '#F8FAFC',
       text: '#334155',
       heading: '#1E3A8A'
+    },
+    fonts: {
+      heading: 'Inter, sans-serif',
+      body: 'Inter, sans-serif'
     }
   },
   {
@@ -53,6 +71,10 @@ export const themes: Theme[] = [
       background: '#FFFFFF',
       text: '#831843',
       heading: '#BE185D'
+    },
+    fonts: {
+      heading: 'Dancing Script, cursive',
+      body: 'Quicksand, sans-serif'
     }
   },
   {
@@ -65,6 +87,10 @@ export const themes: Theme[] = [
       background: '#FFFBEB',
       text: '#78350F',
       heading: '#92400E'
+    },
+    fonts: {
+      heading: 'Bitter, serif',
+      body: 'Source Sans Pro, sans-serif'
     }
   },
   {
@@ -77,6 +103,10 @@ export const themes: Theme[] = [
       background: '#FAFAFA',
       text: '#18181B',
       heading: '#09090B'
+    },
+    fonts: {
+      heading: 'Montserrat, sans-serif',
+      body: 'Open Sans, sans-serif'
     }
   }
 ]
@@ -91,5 +121,14 @@ export const getThemeColors = (themeId: string, customColors?: Partial<ThemeColo
     ...defaultThemeColors,
     ...baseTheme.colors,
     ...customColors
+  }
+}
+
+export const getThemeFonts = (themeId: string, customFonts?: Partial<ThemeFonts>): ThemeFonts => {
+  const baseTheme = getThemeById(themeId)
+  return {
+    ...defaultThemeFonts,
+    ...baseTheme.fonts,
+    ...customFonts
   }
 }
