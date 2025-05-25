@@ -437,5 +437,3 @@ const GiftRegistryPage = () => {
 };
 
 export default GiftRegistryPage;
-
-export default GiftRegistryPage
