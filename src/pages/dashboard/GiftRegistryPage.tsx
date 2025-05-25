@@ -1,18 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Database } from '../../lib/database.types';
 import { supabase } from '../../lib/supabase';
 import { Card, CardContent } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
-import { Gift, Plus, Edit2, Trash2, ExternalLink, Save, X } from 'lucide-react';
+import { Gift, Plus, Edit2, Trash2, ExternalLink, Save, X, Upload } from 'lucide-react';
 import { initializeTransaction } from '../../lib/paystack';
 import toast from 'react-hot-toast';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 
 type GiftItem = Database['public']['Tables']['gift_items']['Row'];
 
 const GiftRegistryPage = () => {
   const { eventId } = useParams();
+  const navigate = useNavigate();
   const [giftItems, setGiftItems] = useState<GiftItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddingItem, setIsAddingItem] = useState(false);
@@ -24,6 +30,7 @@ const GiftRegistryPage = () => {
     quantity: '1',
     external_link: '',
     image_url: '',
+    images: [] as string[]
   });
 
   useEffect(() => {
@@ -48,6 +55,32 @@ const GiftRegistryPage = () => {
     }
   };
 
+  const handleImageUpload = async (files: FileList) => {
+    const urls = [];
+    for (const file of Array.from(files)) {
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${eventId}/${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('gift_photos')
+          .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('gift_photos')
+          .getPublicUrl(fileName);
+
+        urls.push(publicUrl);
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        toast.error('Failed to upload image');
+      }
+    }
+    return urls;
+  };
+
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -62,6 +95,7 @@ const GiftRegistryPage = () => {
             quantity: parseInt(newItem.quantity),
             external_link: newItem.external_link,
             image_url: newItem.image_url,
+            images: newItem.images
           },
         ])
         .select()
@@ -78,6 +112,7 @@ const GiftRegistryPage = () => {
         quantity: '1',
         external_link: '',
         image_url: '',
+        images: []
       });
       toast.success('Gift item added successfully');
     } catch (error) {
@@ -160,6 +195,22 @@ const GiftRegistryPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center space-x-2 text-sm">
+          <Link to="/dashboard" className="text-gray-500 hover:text-gray-700">Dashboard</Link>
+          <span className="text-gray-400">/</span>
+          <Link to={`/dashboard/events/${eventId}`} className="text-gray-500 hover:text-gray-700">Event</Link>
+          <span className="text-gray-400">/</span>
+          <span className="text-gray-900">Gift Registry</span>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => navigate(`/dashboard/events/${eventId}`)}
+        >
+          Back to Event
+        </Button>
+      </div>
+
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Gift Registry</h1>
         <Button onClick={() => setIsAddingItem(true)} disabled={isAddingItem}>
@@ -217,6 +268,28 @@ const GiftRegistryPage = () => {
                   />
                 </div>
               </div>
+
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={async (e) => {
+                    const files = e.target.files;
+                    if (files && files.length > 0) {
+                      const imageUrls = await handleImageUpload(files);
+                      setNewItem(prev => ({ ...prev, images: imageUrls }));
+                    }
+                  }}
+                  className="hidden"
+                  id="gift-photos"
+                />
+                <label htmlFor="gift-photos" className="cursor-pointer">
+                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                  <p className="mt-2 text-sm text-gray-500">Click to upload photos</p>
+                </label>
+              </div>
+
               <div className="flex justify-end space-x-2">
                 <Button type="button" variant="outline" onClick={() => setIsAddingItem(false)}>
                   Cancel
@@ -244,7 +317,24 @@ const GiftRegistryPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {giftItems.map((item) => (
             <Card key={item.id} className="overflow-hidden">
-              {item.image_url && (
+              {item.images && item.images.length > 0 ? (
+                <Swiper
+                  modules={[Navigation, Pagination]}
+                  navigation
+                  pagination={{ clickable: true }}
+                  className="h-64"
+                >
+                  {item.images.map((image, index) => (
+                    <SwiperSlide key={index}>
+                      <img
+                        src={image}
+                        alt={`${item.name} - Photo ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+              ) : item.image_url && (
                 <img
                   src={item.image_url}
                   alt={item.name}
