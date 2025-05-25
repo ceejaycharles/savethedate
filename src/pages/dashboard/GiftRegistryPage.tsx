@@ -23,6 +23,8 @@ const GiftRegistryPage = () => {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isAddingItem, setIsAddingItem] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [newItem, setNewItem] = useState({
     name: '',
     description: '',
@@ -84,19 +86,24 @@ const GiftRegistryPage = () => {
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      let imageUrls = [];
+      if (selectedFiles.length > 0) {
+        imageUrls = await handleImageUpload(selectedFiles as unknown as FileList);
+      }
+
       const { data, error } = await supabase
         .from('gift_items')
         .insert([
           {
             event_id: eventId,
             name: newItem.name,
-            description: newItem.description,
+            description: newItem.description || null,
             desired_price: parseFloat(newItem.desired_price),
             quantity: parseInt(newItem.quantity),
-            external_link: newItem.external_link,
-            image_url: newItem.image_url,
-            images: newItem.images
-          },
+            external_link: newItem.external_link || null,
+            image_url: imageUrls[0] || null,
+            images: imageUrls
+          }
         ])
         .select()
         .single();
@@ -114,6 +121,8 @@ const GiftRegistryPage = () => {
         image_url: '',
         images: []
       });
+      setSelectedFiles([]);
+      setImagePreviews([]);
       toast.success('Gift item added successfully');
     } catch (error) {
       console.error('Error adding gift item:', error);
@@ -122,10 +131,10 @@ const GiftRegistryPage = () => {
   };
 
   const handleUpdateItem = async (itemId: string) => {
-    try {
-      const itemToUpdate = giftItems.find(item => item.id === itemId);
-      if (!itemToUpdate) return;
+    const itemToUpdate = giftItems.find(item => item.id === itemId);
+    if (!itemToUpdate) return;
 
+    try {
       const { error } = await supabase
         .from('gift_items')
         .update(itemToUpdate)
@@ -253,12 +262,6 @@ const GiftRegistryPage = () => {
                   value={newItem.external_link}
                   onChange={(e) => setNewItem({ ...newItem, external_link: e.target.value })}
                 />
-                <Input
-                  label="Image URL (Optional)"
-                  type="url"
-                  value={newItem.image_url}
-                  onChange={(e) => setNewItem({ ...newItem, image_url: e.target.value })}
-                />
                 <div className="md:col-span-2">
                   <Input
                     label="Description (Optional)"
@@ -269,29 +272,72 @@ const GiftRegistryPage = () => {
                 </div>
               </div>
 
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
                 <input
                   type="file"
                   accept="image/*"
                   multiple
-                  onChange={async (e) => {
-                    const files = e.target.files;
-                    if (files && files.length > 0) {
-                      const imageUrls = await handleImageUpload(files);
-                      setNewItem(prev => ({ ...prev, images: imageUrls }));
-                    }
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    setSelectedFiles(files);
+                    
+                    // Create previews
+                    const previews = files.map(file => URL.createObjectURL(file));
+                    setImagePreviews(previews);
                   }}
                   className="hidden"
                   id="gift-photos"
                 />
                 <label htmlFor="gift-photos" className="cursor-pointer">
-                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                  <p className="mt-2 text-sm text-gray-500">Click to upload photos</p>
+                  {imagePreviews.length > 0 ? (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {imagePreviews.map((preview, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={preview}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-48 object-cover rounded-lg"
+                          />
+                          <button
+                            type="button"
+                            className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-sm"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              const newFiles = selectedFiles.filter((_, i) => i !== index);
+                              const newPreviews = imagePreviews.filter((_, i) => i !== index);
+                              setSelectedFiles(newFiles);
+                              setImagePreviews(newPreviews);
+                            }}
+                          >
+                            <X className="h-4 w-4 text-gray-500" />
+                          </button>
+                        </div>
+                      ))}
+                      {imagePreviews.length < 5 && (
+                        <div className="flex items-center justify-center h-48 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                          <div className="text-center">
+                            <Upload className="mx-auto h-8 w-8 text-gray-400" />
+                            <p className="mt-1 text-sm text-gray-500">Add more photos</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                      <p className="mt-2 text-sm text-gray-500">Click to upload photos</p>
+                      <p className="text-xs text-gray-400">You can select multiple photos</p>
+                    </div>
+                  )}
                 </label>
               </div>
 
               <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setIsAddingItem(false)}>
+                <Button type="button" variant="outline" onClick={() => {
+                  setIsAddingItem(false);
+                  setSelectedFiles([]);
+                  setImagePreviews([]);
+                }}>
                   Cancel
                 </Button>
                 <Button type="submit">
@@ -303,19 +349,19 @@ const GiftRegistryPage = () => {
         </Card>
       )}
 
-      {giftItems.length === 0 ? (
-        <Card className="p-8 text-center">
-          <Gift className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-          <h2 className="text-xl font-semibold mb-2">No Gift Items Yet</h2>
-          <p className="text-gray-600 mb-4">Start adding items to your gift registry.</p>
-          <Button variant="outline" onClick={() => setIsAddingItem(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Your First Gift Item
-          </Button>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {giftItems.map((item) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {giftItems.length === 0 ? (
+          <Card className="p-8 text-center col-span-full">
+            <Gift className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+            <h2 className="text-xl font-semibold mb-2">No Gift Items Yet</h2>
+            <p className="text-gray-600 mb-4">Start adding items to your gift registry.</p>
+            <Button variant="outline" onClick={() => setIsAddingItem(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Your First Gift Item
+            </Button>
+          </Card>
+        ) : (
+          giftItems.map((item) => (
             <Card key={item.id} className="overflow-hidden">
               {item.images && item.images.length > 0 ? (
                 <Swiper
@@ -338,7 +384,7 @@ const GiftRegistryPage = () => {
                 <img
                   src={item.image_url}
                   alt={item.name}
-                  className="w-full h-48 object-cover"
+                  className="w-full h-64 object-cover"
                 />
               )}
               <CardContent className="p-6">
@@ -429,11 +475,11 @@ const GiftRegistryPage = () => {
                 )}
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   );
-};
+}
 
 export default GiftRegistryPage;

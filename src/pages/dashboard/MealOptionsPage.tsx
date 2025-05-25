@@ -22,6 +22,8 @@ export default function MealOptionsPage() {
   const [mealOptions, setMealOptions] = useState<MealOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [newMeal, setNewMeal] = useState({
     name: '',
     description: '',
@@ -78,6 +80,11 @@ export default function MealOptionsPage() {
   const handleAddMeal = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      let imageUrl = null;
+      if (selectedImage) {
+        imageUrl = await handleImageUpload(selectedImage);
+      }
+
       const { data, error } = await supabase
         .from('meal_options')
         .insert([
@@ -87,7 +94,7 @@ export default function MealOptionsPage() {
             description: newMeal.description || null,
             dietary_info: newMeal.dietary_info || null,
             max_quantity: newMeal.max_quantity ? parseInt(newMeal.max_quantity) : null,
-            image_url: newMeal.image_url || null
+            image_url: imageUrl
           }
         ])
         .select()
@@ -103,6 +110,8 @@ export default function MealOptionsPage() {
         max_quantity: '',
         image_url: ''
       });
+      setSelectedImage(null);
+      setImagePreview(null);
       toast.success('Meal option added successfully');
     } catch (error) {
       console.error('Error adding meal option:', error);
@@ -212,25 +221,50 @@ export default function MealOptionsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Meal Photo
               </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={async (e) => {
+                  onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
-                      const imageUrl = await handleImageUpload(file);
-                      if (imageUrl) {
-                        setNewMeal(prev => ({ ...prev, image_url: imageUrl }));
-                      }
+                      setSelectedImage(file);
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setImagePreview(reader.result as string);
+                      };
+                      reader.readAsDataURL(file);
                     }
                   }}
                   className="hidden"
                   id="meal-photo"
                 />
                 <label htmlFor="meal-photo" className="cursor-pointer">
-                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                  <p className="mt-2 text-sm text-gray-500">Click to upload a photo</p>
+                  {imagePreview ? (
+                    <div className="relative">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="max-h-48 mx-auto rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setSelectedImage(null);
+                          setImagePreview(null);
+                        }}
+                      >
+                        <X className="h-4 w-4 text-gray-500" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                      <p className="mt-2 text-sm text-gray-500">Click to upload a photo</p>
+                    </div>
+                  )}
                 </label>
               </div>
             </div>
