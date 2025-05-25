@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Database } from '../../lib/database.types';
 import { supabase } from '../../lib/supabase';
 import { Card, CardContent } from '../../components/ui/Card';
@@ -145,6 +145,15 @@ const EventDetailsPage = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      {/* Breadcrumbs */}
+      <div className="mb-6 flex items-center space-x-2 text-sm">
+        <Link to="/dashboard" className="text-gray-500 hover:text-gray-700">Dashboard</Link>
+        <span className="text-gray-400">/</span>
+        <Link to="/dashboard/events" className="text-gray-500 hover:text-gray-700">Events</Link>
+        <span className="text-gray-400">/</span>
+        <span className="text-gray-900">{event?.name}</span>
+      </div>
+
       <div className="flex justify-between items-start mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
@@ -197,6 +206,29 @@ const EventDetailsPage = () => {
           />
         </Card>
       )}
+
+      {/* Shareable Link */}
+      <div className="bg-gray-50 p-4 rounded-lg mb-8">
+        <p className="text-sm text-gray-600 mb-2">Shareable Link:</p>
+        <div className="flex items-center space-x-2">
+          <input
+            type="text"
+            value={`${window.location.origin}/events/${eventId}`}
+            readOnly
+            className="flex-1 bg-white px-3 py-2 rounded border text-sm"
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              navigator.clipboard.writeText(`${window.location.origin}/events/${eventId}`);
+              toast.success('Link copied to clipboard');
+            }}
+          >
+            Copy
+          </Button>
+        </div>
+      </div>
 
       <div className="mb-8">
         <ShareButtons 
