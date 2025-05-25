@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Gift, Users, PlusCircle } from 'lucide-react';
 import Button from '../../components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Card, CardContent } from '../../components/ui/Card';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatDate } from '../../lib/utils';
@@ -19,7 +19,11 @@ const DashboardPage = () => {
       try {
         const { data, error } = await supabase
           .from('events')
-          .select('*, guests(count), invitations(count), gift_items(count)')
+          .select(`
+            *,
+            guests:guests(count),
+            gift_items:gift_items(count)
+          `)
           .eq('user_id', user.id)
           .order('date_start', { ascending: true });
 
@@ -28,7 +32,14 @@ const DashboardPage = () => {
           return;
         }
 
-        setEvents(data || []);
+        // Transform the count aggregates into numbers
+        const eventsWithCounts = data?.map(event => ({
+          ...event,
+          guests_count: event.guests?.[0]?.count || 0,
+          gift_items_count: event.gift_items?.[0]?.count || 0
+        })) || [];
+
+        setEvents(eventsWithCounts);
       } catch (error) {
         console.error('Error fetching events:', error);
       } finally {
@@ -119,11 +130,11 @@ const DashboardPage = () => {
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center text-gray-500">
                     <Users className="h-4 w-4 mr-1" />
-                    <span>{event.guests_count || 0} guests</span>
+                    <span>{event.guests_count} guests</span>
                   </div>
                   <div className="flex items-center text-gray-500">
                     <Gift className="h-4 w-4 mr-1" />
-                    <span>{event.gift_items_count || 0} gifts</span>
+                    <span>{event.gift_items_count} gifts</span>
                   </div>
                 </div>
                 <div className="mt-6">
