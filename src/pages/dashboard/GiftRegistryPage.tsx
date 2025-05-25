@@ -21,8 +21,8 @@ const GiftRegistryPage = () => {
   const navigate = useNavigate();
   const [giftItems, setGiftItems] = useState<GiftItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [isAddingItem, setIsAddingItem] = useState(false);
-  const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [newItem, setNewItem] = useState({
     name: '',
     description: '',
@@ -63,13 +63,13 @@ const GiftRegistryPage = () => {
         const fileName = `${eventId}/${Math.random().toString(36).substring(2)}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
-          .from('event_photos')  // Changed from 'gift_photos' to 'event_photos'
+          .from('Event Photos')
           .upload(fileName, file);
 
         if (uploadError) throw uploadError;
 
         const { data: { publicUrl } } = supabase.storage
-          .from('event_photos')  // Changed from 'gift_photos' to 'event_photos'
+          .from('Event Photos')
           .getPublicUrl(fileName);
 
         urls.push(publicUrl);
@@ -133,7 +133,7 @@ const GiftRegistryPage = () => {
 
       if (error) throw error;
 
-      setEditingItemId(null);
+      setEditingId(null);
       toast.success('Gift item updated successfully');
     } catch (error) {
       console.error('Error updating gift item:', error);
@@ -342,7 +342,7 @@ const GiftRegistryPage = () => {
                 />
               )}
               <CardContent className="p-6">
-                {editingItemId === item.id ? (
+                {editingId === item.id ? (
                   <div className="space-y-4">
                     <Input
                       value={item.name}
@@ -361,7 +361,7 @@ const GiftRegistryPage = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setEditingItemId(null)}
+                        onClick={() => setEditingId(null)}
                       >
                         <X className="w-4 h-4 mr-2" />
                         Cancel
@@ -404,7 +404,7 @@ const GiftRegistryPage = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setEditingItemId(item.id)}
+                          onClick={() => setEditingId(item.id)}
                         >
                           <Edit2 className="w-4 h-4 mr-2" />
                           Edit
