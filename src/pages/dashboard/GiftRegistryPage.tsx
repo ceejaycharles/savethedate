@@ -63,13 +63,13 @@ const GiftRegistryPage = () => {
         const fileName = `${eventId}/${Math.random().toString(36).substring(2)}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
-          .from('gift_photos')
+          .from('event_photos')  // Changed from 'gift_photos' to 'event_photos'
           .upload(fileName, file);
 
         if (uploadError) throw uploadError;
 
         const { data: { publicUrl } } = supabase.storage
-          .from('gift_photos')
+          .from('event_photos')  // Changed from 'gift_photos' to 'event_photos'
           .getPublicUrl(fileName);
 
         urls.push(publicUrl);
