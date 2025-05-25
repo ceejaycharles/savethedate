@@ -26,6 +26,7 @@ import PhotoGalleryPage from './pages/dashboard/PhotoGalleryPage';
 import BudgetPage from './pages/dashboard/BudgetPage';
 import VendorsPage from './pages/dashboard/VendorsPage';
 import CustomQuestionsPage from './pages/dashboard/CustomQuestionsPage';
+import SettingsPage from './pages/dashboard/SettingsPage';
 import PublicEventPage from './pages/public/PublicEventPage';
 import RsvpPage from './pages/public/RsvpPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -65,6 +66,7 @@ function App() {
               <Route path="events/:eventId/budget" element={<BudgetPage />} />
               <Route path="events/:eventId/vendors" element={<VendorsPage />} />
               <Route path="events/:eventId/questions" element={<CustomQuestionsPage />} />
+              <Route path="settings" element={<SettingsPage />} />
             </Route>
             
             {/* 404 route */}
