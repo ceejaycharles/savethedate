@@ -93,5 +93,3 @@ export const getThemeColors = (themeId: string, customColors?: Partial<ThemeColo
     ...customColors
   }
 }
-
-export { themes }
