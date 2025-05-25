@@ -35,11 +35,15 @@ export function PhotoUploader({ eventId, albumId, onUploadComplete }: PhotoUploa
   };
 
   const handleUpload = async () => {
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0) {
+      toast.error('Please select photos to upload');
+      return;
+    }
 
     setUploading(true);
     try {
       const user = (await supabase.auth.getUser()).data.user;
+      if (!user) throw new Error('User not authenticated');
 
       for (const file of Array.from(files)) {
         const fileExt = file.name.split('.').pop();
@@ -61,7 +65,7 @@ export function PhotoUploader({ eventId, albumId, onUploadComplete }: PhotoUploa
           .from('photos')
           .insert({
             event_id: eventId,
-            user_id_uploader: user!.id,
+            user_id_uploader: user.id,
             image_url: publicUrl,
             album_id: albumId,
             privacy_setting: 'event'
@@ -90,6 +94,10 @@ export function PhotoUploader({ eventId, albumId, onUploadComplete }: PhotoUploa
       onUploadComplete();
       setFiles(null);
       setTags([]);
+
+      // Reset the file input
+      const fileInput = document.getElementById('photo-upload') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
     } catch (error) {
       console.error('Error uploading photos:', error);
       toast.error('Failed to upload photos');
@@ -108,6 +116,7 @@ export function PhotoUploader({ eventId, albumId, onUploadComplete }: PhotoUploa
               Click to upload or drag and drop
             </p>
             <input
+              id="photo-upload"
               type="file"
               multiple
               accept="image/*"
