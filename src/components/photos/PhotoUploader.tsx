@@ -17,9 +17,16 @@ export function PhotoUploader({ eventId, albumId, onUploadComplete }: PhotoUploa
   const [uploading, setUploading] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
+  const [previews, setPreviews] = useState<string[]>([]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFiles(e.target.files);
+    const selectedFiles = e.target.files;
+    if (selectedFiles) {
+      setFiles(selectedFiles);
+      // Create previews for selected files
+      const newPreviews = Array.from(selectedFiles).map(file => URL.createObjectURL(file));
+      setPreviews(newPreviews);
+    }
   };
 
   const handleAddTag = (e: React.KeyboardEvent) => {
@@ -94,7 +101,8 @@ export function PhotoUploader({ eventId, albumId, onUploadComplete }: PhotoUploa
       onUploadComplete();
       setFiles(null);
       setTags([]);
-
+      setPreviews([]);
+      
       // Reset the file input
       const fileInput = document.getElementById('photo-upload') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
@@ -106,37 +114,58 @@ export function PhotoUploader({ eventId, albumId, onUploadComplete }: PhotoUploa
     }
   };
 
+  const clearSelection = () => {
+    setFiles(null);
+    setPreviews([]);
+    const fileInput = document.getElementById('photo-upload') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
+  };
+
   return (
     <Card>
       <CardContent className="p-6">
         <div className="space-y-4">
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-            <Upload className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="mt-2 text-sm text-gray-600">
-              Click to upload or drag and drop
-            </p>
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
             <input
               id="photo-upload"
               type="file"
               multiple
               accept="image/*"
               onChange={handleFileChange}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              className="hidden"
             />
+            
+            {previews.length > 0 ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {previews.map((preview, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={preview}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-48 object-cover rounded-lg"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={clearSelection}>
+                    Clear Selection
+                  </Button>
+                  <Button onClick={handleUpload} disabled={uploading}>
+                    {uploading ? 'Uploading...' : 'Upload Photos'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <label htmlFor="photo-upload" className="cursor-pointer block text-center">
+                <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                <p className="mt-2 text-sm text-gray-600">
+                  Click to upload or drag and drop
+                </p>
+              </label>
+            )}
           </div>
-
-          {files && files.length > 0 && (
-            <div>
-              <h4 className="font-medium mb-2">Selected Files:</h4>
-              <ul className="space-y-1">
-                {Array.from(files).map((file, index) => (
-                  <li key={index} className="text-sm text-gray-600">
-                    {file.name}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -168,15 +197,6 @@ export function PhotoUploader({ eventId, albumId, onUploadComplete }: PhotoUploa
               />
             </div>
           </div>
-
-          <Button
-            onClick={handleUpload}
-            disabled={!files || files.length === 0 || uploading}
-            isLoading={uploading}
-            className="w-full"
-          >
-            Upload Photos
-          </Button>
         </div>
       </CardContent>
     </Card>
