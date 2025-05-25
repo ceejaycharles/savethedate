@@ -1,6 +1,8 @@
 import React from 'react';
 import { Card, CardContent } from '../../components/ui/Card';
 import { LanguageSettings } from '../../components/settings/LanguageSettings';
+import { NotificationSettings } from '../../components/settings/NotificationSettings';
+import { ThemeSelector } from '../../components/customization/ThemeSelector';
 import { useAuth } from '../../contexts/AuthContext';
 import { Link } from 'react-router-dom';
 
@@ -34,8 +36,22 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
+        {/* Theme Settings */}
+        <Card>
+          <CardContent className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Theme Settings</h2>
+            <p className="text-gray-600 mb-6">
+              Customize the appearance of your dashboard and event pages.
+            </p>
+            <ThemeSelector />
+          </CardContent>
+        </Card>
+
         {/* Language Settings */}
         <LanguageSettings />
+
+        {/* Notification Settings */}
+        <NotificationSettings />
       </div>
     </div>
   );
