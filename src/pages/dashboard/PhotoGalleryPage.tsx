@@ -36,23 +36,32 @@ const PhotoGalleryPage = () => {
 
   const fetchTags = async () => {
     try {
-      const { data, error } = await supabase
-        .from('photo_tags')
-        .select('tag')
-        .eq('photo_id', 'in', (
-          supabase
-            .from('photos')
-            .select('id')
-            .eq('event_id', eventId)
-        ));
+      // First get all photo IDs for this event
+      const { data: photoIds, error: photoIdsError } = await supabase
+        .from('photos')
+        .select('id')
+        .eq('event_id', eventId);
 
-      if (error) throw error;
+      if (photoIdsError) throw photoIdsError;
 
-      // Get unique tags using Set
-      const uniqueTags = Array.from(new Set(data.map(t => t.tag)));
-      setAvailableTags(uniqueTags);
+      if (photoIds && photoIds.length > 0) {
+        // Then get all tags for these photos
+        const { data, error } = await supabase
+          .from('photo_tags')
+          .select('tag')
+          .in('photo_id', photoIds.map(p => p.id));
+
+        if (error) throw error;
+
+        // Get unique tags using Set
+        const uniqueTags = Array.from(new Set(data.map(t => t.tag)));
+        setAvailableTags(uniqueTags);
+      } else {
+        setAvailableTags([]);
+      }
     } catch (error) {
       console.error('Error fetching tags:', error);
+      toast.error('Failed to load photo tags');
     }
   };
 
@@ -418,6 +427,7 @@ const PhotoGalleryPage = () => {
             </div>
           )}
         </div>
+      
       </div>
 
       {showAlbumModal && (
