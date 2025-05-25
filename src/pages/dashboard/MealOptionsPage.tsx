@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
-import { Plus, Edit2, Trash2, Save, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, Upload } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -13,10 +13,12 @@ interface MealOption {
   description: string | null;
   dietary_info: string | null;
   max_quantity: number | null;
+  image_url?: string;
 }
 
 export default function MealOptionsPage() {
   const { eventId } = useParams();
+  const navigate = useNavigate();
   const [mealOptions, setMealOptions] = useState<MealOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -24,7 +26,8 @@ export default function MealOptionsPage() {
     name: '',
     description: '',
     dietary_info: '',
-    max_quantity: ''
+    max_quantity: '',
+    image_url: ''
   });
 
   useEffect(() => {
@@ -49,6 +52,29 @@ export default function MealOptionsPage() {
     }
   };
 
+  const handleImageUpload = async (file: File) => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${eventId}/${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('meal_photos')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('meal_photos')
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Failed to upload image');
+      return null;
+    }
+  };
+
   const handleAddMeal = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -60,7 +86,8 @@ export default function MealOptionsPage() {
             name: newMeal.name,
             description: newMeal.description || null,
             dietary_info: newMeal.dietary_info || null,
-            max_quantity: newMeal.max_quantity ? parseInt(newMeal.max_quantity) : null
+            max_quantity: newMeal.max_quantity ? parseInt(newMeal.max_quantity) : null,
+            image_url: newMeal.image_url || null
           }
         ])
         .select()
@@ -73,7 +100,8 @@ export default function MealOptionsPage() {
         name: '',
         description: '',
         dietary_info: '',
-        max_quantity: ''
+        max_quantity: '',
+        image_url: ''
       });
       toast.success('Meal option added successfully');
     } catch (error) {
@@ -129,8 +157,20 @@ export default function MealOptionsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Meal Options</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center space-x-2 text-sm">
+          <Link to="/dashboard" className="text-gray-500 hover:text-gray-700">Dashboard</Link>
+          <span className="text-gray-400">/</span>
+          <Link to={`/dashboard/events/${eventId}`} className="text-gray-500 hover:text-gray-700">Event</Link>
+          <span className="text-gray-400">/</span>
+          <span className="text-gray-900">Meal Options</span>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => navigate(`/dashboard/events/${eventId}`)}
+        >
+          Back to Event
+        </Button>
       </div>
 
       <Card className="mb-8">
@@ -167,6 +207,34 @@ export default function MealOptionsPage() {
                 />
               </div>
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Meal Photo
+              </label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const imageUrl = await handleImageUpload(file);
+                      if (imageUrl) {
+                        setNewMeal(prev => ({ ...prev, image_url: imageUrl }));
+                      }
+                    }
+                  }}
+                  className="hidden"
+                  id="meal-photo"
+                />
+                <label htmlFor="meal-photo" className="cursor-pointer">
+                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                  <p className="mt-2 text-sm text-gray-500">Click to upload a photo</p>
+                </label>
+              </div>
+            </div>
+
             <Button type="submit" className="w-full md:w-auto">
               <Plus className="w-4 h-4 mr-2" />
               Add Meal Option
@@ -246,6 +314,13 @@ export default function MealOptionsPage() {
                           <p className="text-sm text-gray-500 mt-1">
                             Maximum servings: {meal.max_quantity}
                           </p>
+                        )}
+                        {meal.image_url && (
+                          <img
+                            src={meal.image_url}
+                            alt={meal.name}
+                            className="mt-2 rounded-lg max-w-xs"
+                          />
                         )}
                       </div>
                       <div className="flex space-x-2">
