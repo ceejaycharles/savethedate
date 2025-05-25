@@ -182,5 +182,3 @@ export function PhotoUploader({ eventId, albumId, onUploadComplete }: PhotoUploa
     </Card>
   );
 }
-
-export { PhotoUploader }
