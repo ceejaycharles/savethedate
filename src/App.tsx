@@ -12,6 +12,7 @@ import DashboardLayout from './layouts/DashboardLayout';
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
 import PricingPage from './pages/PricingPage';
+import EventsPage from './pages/EventsPage';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
@@ -35,10 +36,7 @@ function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <Router future={{ 
-          v7_startTransition: true,
-          v7_relativeSplatPath: true
-        }}>
+        <Router>
           <Toaster position="top-right" />
           <Routes>
             {/* Public routes */}
@@ -46,6 +44,7 @@ function App() {
               <Route index element={<HomePage />} />
               <Route path="about" element={<AboutPage />} />
               <Route path="pricing" element={<PricingPage />} />
+              <Route path="events" element={<EventsPage />} />
               <Route path="login" element={<LoginPage />} />
               <Route path="register" element={<RegisterPage />} />
               <Route path="forgot-password" element={<ForgotPasswordPage />} />

@@ -32,6 +32,9 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
+            <Link to="/events" className="text-gray-700 hover:text-primary-600 transition-colors">
+              Browse Events
+            </Link>
             <Link to="/about" className="text-gray-700 hover:text-primary-600 transition-colors">
               About
             </Link>
@@ -83,6 +86,13 @@ const Navbar = () => {
         {isOpen && (
           <div className="mt-4 md:hidden animate-slide-down">
             <div className="flex flex-col space-y-4 py-2">
+              <Link 
+                to="/events" 
+                className="text-gray-700 hover:text-primary-600 transition-colors py-2"
+                onClick={() => setIsOpen(false)}
+              >
+                Browse Events
+              </Link>
               <Link 
                 to="/about" 
                 className="text-gray-700 hover:text-primary-600 transition-colors py-2"
