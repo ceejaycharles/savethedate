@@ -36,28 +36,6 @@ export default function SettingsPage() {
 
         {/* Language Settings */}
         <LanguageSettings />
-
-        {/* Theme Settings */}
-        <Card>
-          <CardContent className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Theme Settings</h2>
-            <p className="text-gray-600">
-              Customize the appearance of your dashboard and event pages.
-            </p>
-            {/* Add theme settings controls here */}
-          </CardContent>
-        </Card>
-
-        {/* Notification Settings */}
-        <Card>
-          <CardContent className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Notification Settings</h2>
-            <p className="text-gray-600">
-              Control how and when you receive notifications about your events.
-            </p>
-            {/* Add notification settings controls here */}
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
